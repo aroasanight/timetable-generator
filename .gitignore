@@ -1,7 +1,7 @@
 # CUSTOM
-timetables/*.json
-staff.json
-subjects.json
+timetables/*
+data/*
+output/*
 *.DS_Store
 *._*
 
