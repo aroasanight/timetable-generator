@@ -1,59 +1,25 @@
 from PIL import Image, ImageDraw, ImageFont
 
-# Define the lesson data
-# lessons = [ # SAMPLE DATA
-#     (0, 0, 'Music', 'C2', 'VF', 'yellow'),
-#     (1, 1, 'Comp', 'MUS', 'VF', 'orangered'),
-#     (2, 2, 'Music', 'MUS', 'GF', 'skyblue'),
-#     (3, 3, 'Comp', 'MUS', 'VF', 'yellow'),
-#     (4, 4, 'Music', 'C2', 'VF', 'orangered'),
-#     (4, 5, 'Music', 'MUS', 'GF', 'skyblue'),
-#     (5, 6, 'Comp', 'MUS', 'VF', 'yellow'),
-#     (5, 7, 'Comp', 'C2', 'VF', 'orangered'),
-#     (6, 8, 'Music', 'MUS', 'GF', 'skyblue'),
-#     (7, 9, 'Music', 'MUS', 'VF', 'yellow'),
-#     (8, 6, 'Comp', 'MUS', 'GF', 'grey'),
-#     (9, 5, 'Music', 'C2', 'VF', 'yellow'),
-# ]
 
-# LOAD DATA FROM timetables/19wilde.json
+
 import json
 
 # list files in timetables directory
 
 import os
 to_export = []
-for file in os.listdir("timetables"):
+for file in os.listdir("input"):
     if file.endswith(".json"):
         to_export.append(file.replace(".json", ""))
 
 for name in to_export:
-    with open(f"timetables/{name}.json") as f:
+    with open(f"input/{name}.json") as f:
         data = json.load(f)
 
-    lessons_in = data["times"]
-    lessons_dict = data["dict"]
-
     lessons = []
-
-    # in format
-    # {
-        # "times": {
-        #     "1": {
-        #         "4": [0, "6F"],
-        #         "6": [1, "C2"],
-        #         "8": [2, "Mus"]
-        #     }
-    # }
-    # where times["1"] means Mon1, times["4"] means Thu1, etc.
-    # and times["4"]["2"] means Thu1 AM, times["4"]["9"] means Thu1 Lunch, etc.
-    for day, times in lessons_in.items():
-        for time, lesson in times.items():
-            subject = lessons_dict[str(lesson[0])]["subject"]
-            room = lesson[1]
-            teacher = lessons_dict[str(lesson[0])]["teacher"]
-            color = lessons_dict[str(lesson[0])]["color"]
-            lessons.append((int(day)-1, int(time)-2, subject, room, teacher, color))
+    
+    for lesson in data["events"]:
+        lessons.append(lesson)
 
     print(lessons)
     print()

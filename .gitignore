@@ -1,9 +1,9 @@
 # CUSTOM
-timetables/*
-data/*
+input/*
 output/*
 *.DS_Store
 *._*
+*.record
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
