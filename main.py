@@ -34,9 +34,9 @@ for name in to_export:
     days = ["Mon1", "Tue1", "Wed1", "Thu1", "Fri1", "Mon2", "Tue2", "Wed2", "Thu2", "Fri2"]
     periods = ["AM", "P1", "P2", "Break", "P3", "PM", "Lunch", "P4", "P5", "After"]
     height_periods = [True, False, False, True, False, True, True, False, False, False]
-    cell_width_full = 55
+    cell_width_full = 50
     cell_width_half = 45
-    cell_height_full = 30
+    cell_height_full = 26
     cell_height_half = 15
     margin = 4
     text_margin = 4
