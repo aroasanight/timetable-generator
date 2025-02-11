@@ -1,6 +1,7 @@
 # CUSTOM
 input/*
 output/*
+archive/*
 *.DS_Store
 *._*
 *.record
