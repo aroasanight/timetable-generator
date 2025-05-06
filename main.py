@@ -3,7 +3,9 @@ import re
 import json
 import os
 import time
+import pytesseract
 from PIL import Image, ImageDraw, ImageFont, ImageColor
+
 
 valid_colours = []
 for name, code in ImageColor.colormap.items():
@@ -21,29 +23,6 @@ def load_from_pdf(path):
     headerendx = 1068
     headerendy = 72
 
-    y = [
-        # 90.026,
-        120.026,
-        234.026,
-        348.026,
-        462.026,
-        576.026,
-        690.026,
-    ]
-
-    x = [
-        # 56.691,
-        136.693,
-        239.137,
-        341.582,
-        444.026,
-        546.471,
-        648.915,
-        751.36,
-        853.804,
-        956.249,
-        1058.693
-    ]
 
     y_labels = [
         "MonA",
@@ -81,19 +60,78 @@ def load_from_pdf(path):
     size_mod_width = width / widthdiv
     size_mod_height = height / heightdiv
 
-    y2 = y
-    x2 = x
-
     headerx2 = headerx * size_mod_width
     headery2 = headery * size_mod_height
     headerendx2 = headerendx * size_mod_width
     headerendy2 = headerendy * size_mod_height
 
+    # detect whether days are horizontal or vertical
+    # check for text between (136, 90) and (340, 118)
+    text = pdf_document[0].get_text("text", clip=(136*size_mod_width, 90*size_mod_height, 340*size_mod_width, 118*size_mod_height))
+
+    if "Monday" in text:
+        mode = "days"
+    elif "Tutor" in text:
+        mode = "periods"
+    else:
+        print("Error: Could not detect timetable format.")
+        return None
+
+
+    print(text)
+
+    if mode == "periods":
+        y = [
+            # 90.026,
+            120.026,
+            234.026,
+            348.026,
+            462.026,
+            576.026,
+            690.026,
+        ]
+
+        x = [
+            # 56.691,
+            136.693,
+            239.137,
+            341.582,
+            444.026,
+            546.471,
+            648.915,
+            751.36,
+            853.804,
+            956.249,
+            1058.693
+        ]
+    else:
+        y = [
+            120.026,
+            159.337,
+            237.957,
+            316.578,
+            355.888,
+            434.509,
+            473.819,
+            532.785,
+            611.406,
+            690.826
+        ]
+
+        x = [
+            136.693,
+            321.092,
+            505.493,
+            689.893,
+            874.293,
+            1059.693
+        ]
+
     for i in range(len(y)):
-        y2[i] *= size_mod_height
+        y[i] *= size_mod_height
 
     for i in range(len(x)):
-        x2[i] *= size_mod_width
+        x[i] *= size_mod_width
 
     
     # get name and tutor
@@ -107,16 +145,18 @@ def load_from_pdf(path):
     print(f"We detected your tutor group is {tutor_group}.")
     print(f"We'll use the name {short_name} on your timetable due to size constraints.")
 
+    # detect whether days are in rows or columns
+
 
     # load events 
     for page_num in range(len(pdf_document)):
         page = pdf_document[page_num]
 
-        for yindex, row in enumerate(y2[:-1]):
+        for yindex, row in enumerate(y[:-1]):
             days.append([])
-            for xindex, col in enumerate(x2[:-1]):
+            for xindex, col in enumerate(x[:-1]):
                 # check if there is text between (col, row) and (x2[xindex+1], y2[yindex+1])
-                text = page.get_text("text", clip=(col, row, x2[xindex+1], y2[yindex+1]))
+                text = page.get_text("text", clip=(col, row, x[xindex+1], y[yindex+1]))
                 days[-1].append(text.replace("\n"," ").strip())
         
     pdf_document.close()
@@ -135,7 +175,10 @@ def load_from_pdf(path):
     def process_event(event):
         # Split and clean the last two words
         s1 = event[2].split(" ")[-1].upper().replace(" ", "")
-        s2 = event[2].split(" ")[-2].upper().replace(" ", "")
+        try:
+            s2 = event[2].split(" ")[-2].upper().replace(" ", "")
+        except:
+            s2 = "NUL"
         
         room = None
         staff = None
@@ -163,23 +206,24 @@ def load_from_pdf(path):
         ["Comp", "mediumslateblue", ["computing"]],
         ["Maths", "skyblue", ["maths"]],
         ["Music", "mediumseagreen", ["music"]],
-        ["Study", "orange", ["6th form study"]],
+        ["Study", "orangered", ["6th form study"]],
         ["Tutor", "lightgrey", [": gb", ": pp", ": vf", ": de", ": bw", ": nr", "10: a4", "10: w4", "10: f4", "10: g4", "10: n4", "11: a5", "11: w5", "11: f5", "11: g5", "11: n5", " a1", " a2", " a3", " w1", " w2", " w3", " g1", " g2", " g3", " f1", " f2", " f3", " n1", " n2", " n3"]],
         ["CR", "lightcoral", ["citizenship"]],
-        ["PE", "lightcoral", ["pe"]],
-        ["Sci", "lightcoral", ["science"]],
-        ["Phys", "lightcoral", ["physics"]],
-        ["Chem", "lightcoral", ["chemistry"]],
-        ["Bio", "lightcoral", ["biology"]],
-        ["Eng", "lightcoral", ["english"]],
-        ["Hist", "lightcoral", ["history"]],
-        ["Geog", "lightcoral", ["geography"]],
-        ["RE", "lightcoral", ["religious"]],
+        ["PE", "royalblue", ["pe"]],
+        ["Sci", "limegreen", ["science"]],
+        ["Phys", "limegreen", ["physics"]],
+        ["Chem", "limegreen", ["chemistry"]],
+        ["Bio", "limegreen", ["biology"]],
+        ["Eng", "tomato", ["english"]],
+        ["Hist", "gold", ["history"]],
+        ["Geog", "mediumaquamarine", ["geography"]],
+        ["RE", "hotpink", ["religious"]],
         ["Fr", "lightcoral", ["french"]],
         ["Sp", "lightcoral", ["spanish"]],
-        ["Drama", "lightcoral", ["drama"]],
-        ["Dance", "lightcoral", ["dance"]],
-        ["Art", "lightcoral", ["art"]],
+        ["Drama", "pink", ["drama"]],
+        ["Dance", "palevioletred", ["dance"]],
+        ["Art", "crimson", ["art"]],
+        ["Media", "hotpink", ["media"]]
     ]
 
     for day_number, day in enumerate(days):
@@ -191,12 +235,18 @@ def load_from_pdf(path):
                 if not (period_number == 0 and room == None):
                     subject = ""
 
+                    colour = None
+
                     for translation in translate:
                         for word in translation[2]:
                             if word in period.lower():
                                 subject = translation[0]
                                 colour = translation[1]
                                 break
+                    
+                    if colour == None:
+                        colour = "grey"
+                        subject = "Unknown"
                     
                     if room == None:
                         room = ""
@@ -484,7 +534,7 @@ def generate_timetable_image(mode, json_in, path):
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         text_height = text_bbox[3] - text_bbox[1]
-        draw.text((x + (col_width - text_width) / 2, y + (row_height - text_height) / 2), text, fill="black", font=font)
+        draw.text((x + (col_width - text_width) / 2, y + (row_height - text_height) / 2 - 1), text, fill="black", font=font)
 
     # draw gridlines
     draw.line([margin, margin, margin, margin + table_height], fill="black", width=1)
@@ -518,7 +568,7 @@ def generate_timetable_image(mode, json_in, path):
 
 
 def generate_printable(io_path):
-    zoom = 1
+    scale = 0.5 # larger numbers shrink the timetables
 
     if not os.path.exists(io_path):
         print("Error generating printable timetable: folder does not exist.")
@@ -533,8 +583,9 @@ def generate_printable(io_path):
             return
     
     # generate A4 size image
-    a4_width = int((930 * 1.15)/zoom)
-    a4_height = int((1316 * 1.15)/zoom)
+    a4_width =     2100
+    a4_height =     2970
+
 
     image = Image.new('RGB', (a4_width, a4_height), 'white')
 
@@ -544,11 +595,30 @@ def generate_printable(io_path):
     normal = Image.open(f"{io_path}/normal.png")
     full = Image.open(f"{io_path}/full.png")
 
+    margin = 80
+
     # place images on sheet 1
-    image.paste(w1, (64, 64))
-    image.paste(w2, (64 + 303 + 32, 64))
-    image.paste(normal, (64, 64 + 203 + 32))
-    image.paste(full, (64, 64 + 203 + 32 + 229 + 32))
+    # image.paste(w1, (margin*2, margin*2))
+    # image.paste(w2, (64 + 303 + 32, 64))
+    # image.paste(normal, (64, 64 + 203 + 32))
+    # image.paste(full, (64, 64 + 203 + 32 + 229 + 32))
+
+    # shrink images
+    w1 = w1.resize((int(w1.width // scale), int(w1.height // scale)))
+    w2 = w2.resize((int(w2.width // scale), int(w2.height // scale)))
+    normal = normal.resize((int(normal.width // scale), int(normal.height // scale)))
+    full = full.resize((int(full.width // scale), int(full.height // scale)))
+
+    w1_width_height = (w1.width, w1.height)
+    w2_width_height = (w2.width, w2.height)
+    normal_width_height = (normal.width, normal.height)
+    full_width_height = (full.width, full.height)
+
+    # place images on sheet 1
+    image.paste(w1, (margin, margin))
+    image.paste(w2, (margin + w1_width_height[0] + margin, margin))
+    image.paste(normal, (margin, margin + w1_width_height[1] + margin))
+    image.paste(full, (margin, margin + w1_width_height[1] + margin + normal_width_height[1] + margin))
 
     # save sheet 1
     image.save(f"{io_path}/printable_side1.png")
@@ -557,8 +627,12 @@ def generate_printable(io_path):
     image = Image.new('RGB', (a4_width, a4_height), 'white')
 
     # place images on sheet 2
-    image.paste(w2, (a4_width - 64 - 303, 64))
-    image.paste(w1, (a4_width - 64 - 303 - 303 - 32, 64))
+    # image.paste(w2, (a4_width - 64 - 303, 64))
+    # image.paste(w1, (a4_width - 64 - 303 - 303 - 32, 64))
+
+    # place images on sheet 2
+    image.paste(w2, (a4_width-margin-w2_width_height[0], margin))
+    image.paste(w1, (a4_width-margin-w2_width_height[0]-margin-w1_width_height[0], margin))
 
     # save sheet 2
     image.save(f"{io_path}/printable_side2.png")
@@ -567,54 +641,42 @@ def generate_printable(io_path):
     page1 = Image.open(f"{io_path}/printable_side1.png")
     page2 = Image.open(f"{io_path}/printable_side2.png")
 
-    page1.save(f"{io_path}/printable.pdf", "PDF", resolution=100.0, save_all=True, append_images=[page2])
+    page1.save(f"{io_path}/printableD7CQ=.pdf", "PDF", resolution=100.0, save_all=True, append_images=[page2])
 
+mass_pdfs = ""
 
-if not os.path.exists("input"):
-    os.mkdir("input")
-    print("Please put your PDFs and JSONs in the 'input' folder.")
-    exit()
+if mass_pdfs == "":
+    if not os.path.exists("input"):
+        os.mkdir("input")
+        print("Please put your PDFs and JSONs in the 'input' folder.")
+        exit()
 
-pdfs_in = []
-jsons_in = []
-for file in os.listdir("input"):
-    if file.endswith(".pdf"):
-        pdfs_in.append(file)
-    elif file.endswith(".json"):
-        jsons_in.append(file)
+    pdfs_in = []
+    jsons_in = []
+    photos_in = []
+    for file in os.listdir("input"):
+        if file.endswith(".pdf"):
+            pdfs_in.append(file)
+        elif file.endswith(".json"):
+            jsons_in.append(file)
+        elif file.endswith(".jpg"):
+            photos_in.append(file)
 
-if len(pdfs_in) == 0 and len(jsons_in) == 0:
-    print("No PDFs or JSONs found in the 'input' folder.")
-    exit()
+    if len(pdfs_in) == 0 and len(jsons_in) == 0:
+        print("No PDFs or JSONs found in the 'input' folder.")
+        # exit()
 
-if not os.path.exists("output"):
-    os.mkdir("output")
+    if not os.path.exists("output"):
+        os.mkdir("output")
 
-output_folder = f"output/{time.strftime('%Y%m%d_%H%M%S')}"
+    output_folder = f"output/{time.strftime('%Y%m%d_%H%M%S')}"
 
-os.mkdir(output_folder)
+    os.mkdir(output_folder)
 
-created_folders = []
+    created_folders = []
 
-for pdf in pdfs_in:
-    name, short_name, tutor_group, events = load_from_pdf(f"input/{pdf}")
-
-    folder_name = f"{name.lower().replace(' ', '-')}_{tutor_group}"
-
-    if folder_name not in created_folders:
-        os.mkdir(f"{output_folder}/{folder_name}")
-        created_folders.append(folder_name)
-
-    filename = f"{output_folder}/{folder_name}/{short_name.lower()}_timetable.json"
-    save_json(name, short_name, tutor_group, events, filename)
-
-for json_filename in jsons_in:
-    with open(f"input/{json_filename}") as f:
-        data = json.load(f)
-    if check_json_format(data, json_filename):
-        name = data["name"]
-        short_name = data["short"]
-        tutor_group = data["tutor"]
+    for pdf in pdfs_in:
+        name, short_name, tutor_group, events = load_from_pdf(f"input/{pdf}")
 
         folder_name = f"{name.lower().replace(' ', '-')}_{tutor_group}"
 
@@ -622,14 +684,141 @@ for json_filename in jsons_in:
             os.mkdir(f"{output_folder}/{folder_name}")
             created_folders.append(folder_name)
 
-        renders_path = f"{output_folder}/{folder_name}/renders"
+        filename = f"{output_folder}/{folder_name}/{short_name.lower()}_timetable.json"
+        save_json(name, short_name, tutor_group, events, filename)
+
+    for json_filename in jsons_in:
+        with open(f"input/{json_filename}") as f:
+            data = json.load(f)
+        if check_json_format(data, json_filename):
+            name = data["name"]
+            short_name = data["short"]
+            tutor_group = data["tutor"]
+
+            folder_name = f"{name.lower().replace(' ', '-')}_{tutor_group}"
+
+            if folder_name not in created_folders:
+                os.mkdir(f"{output_folder}/{folder_name}")
+                created_folders.append(folder_name)
+
+            renders_path = f"{output_folder}/{folder_name}/renders"
+            
+            os.mkdir(renders_path)
+            
+            for mode in ["w1", "w2", "normal", "full"]:
+                generate_timetable_image(mode, data, f"{renders_path}/{mode}.png")
+            
+            generate_printable(f"{output_folder}/{folder_name}/renders")
+
+    for image_filename in photos_in:
+        print(image_filename)
+        image = Image.open(f"input/{image_filename}")
         
-        os.mkdir(renders_path)
+        text = pytesseract.image_to_string(image)
+
+        print(text)
+
+        match = re.search(r"Timetable for (.+?)\s*,\s*(\w+)\s*,\s*(Week [AB])", text)
+
+        found = False
+
+        if match:
+            name = match.group(1)
+            tutor_group = match.group(2)
+            week = match.group(3)
+
+            print(f"Name: {name}")
+            print(f"Tutor Group: {tutor_group}")
+            print(f"Week: {week}")
+
+            found = True
         
-        for mode in ["w1", "w2", "normal", "full"]:
-            generate_timetable_image(mode, data, f"{renders_path}/{mode}.png")
+        if not found:
+            match = re.search(r"Timetable for (.+?)\s*,\s*(\w+)", text)
+
+            if match:
+                name = match.group(1)
+                tutor_group = match.group(2)
+
+                print(f"Name: {name}")
+                print(f"Tutor Group: {tutor_group}")
+
+        # detect grids on image and display overlaying red boxes outlining the two grids (beneath the Timetable for texts)
+
+else:
+    # for pdf in folder masspdf
+    if not os.path.exists(mass_pdfs):
+        print("Error: masspdf folder does not exist.")
+        exit()
+    
+    pdfs_in = []
+
+    for file in os.listdir(mass_pdfs):
+        if file.endswith(".pdf"):
+            pdfs_in.append(file)
+
+    if len(pdfs_in) == 0:
+        print("No PDFs found in the 'masspdf' folder.")
+        exit()
+    
+    if not os.path.exists("working"):
+        os.mkdir("working")
+    
+    working_folders = []
+    
+    for pdf in pdfs_in:
+        name, short_name, tutor_group, events = load_from_pdf(f"{mass_pdfs}/{pdf}")
+
+        folder_name = f"{name.lower().replace(' ', '-')}_{tutor_group}"
+
+        os.mkdir(f"working/{folder_name}")
+
+        working_folders.append(folder_name)
         
-        generate_printable(f"{output_folder}/{folder_name}/renders")
+        generate_timetable_image("w1", {"name": name, "short": short_name, "tutor": tutor_group, "events": events}, f"working/{folder_name}/w1.png")
+        generate_timetable_image("w2", {"name": name, "short": short_name, "tutor": tutor_group, "events": events}, f"working/{folder_name}/w2.png")
+        generate_timetable_image("normal", {"name": name, "short": short_name, "tutor": tutor_group, "events": events}, f"working/{folder_name}/normal.png")
+        generate_timetable_image("full", {"name": name, "short": short_name, "tutor": tutor_group, "events": events}, f"working/{folder_name}/full.png")
+
+        generate_printable(f"working/{folder_name}")
+    
+    if not os.path.exists("output"):
+        os.mkdir("output")
+    
+    for folder_name in working_folders:
+        # copy printable PDFS to output (COPY NOT MOVE)
+        os.rename(f"working/{folder_name}/printableD7CQ=.pdf", f"output/{folder_name}.pdf")
+
+    # combine all pdfs into one
+    pdfs = []
+
+    for pdf_generated in os.listdir("output"):
+        if pdf_generated.endswith(".pdf"):
+            pdfs.append(f"output/{pdf_generated}")
+    
+    pdfs.sort()
+
+    pdf_writer = fitz.open()
+
+    for pdf in pdfs:
+        pdf_document = fitz.open(pdf)
+        pdf_writer.insert_pdf(pdf_document)
+        pdf_document.close()
+    
+    pdf_writer.save("output/MASTER.pdf")
+
+    # delete working folder
+    for folder_name in working_folders:
+        os.remove(f"working/{folder_name}/w1.png")
+        os.remove(f"working/{folder_name}/w2.png")
+        os.remove(f"working/{folder_name}/normal.png")
+        os.remove(f"working/{folder_name}/full.png")
+        os.remove(f"working/{folder_name}/printable_side1.png")
+        os.remove(f"working/{folder_name}/printable_side2.png")
+        os.rmdir(f"working/{folder_name}")
+    
+    os.rmdir("working")
 
 
-
+        
+    
