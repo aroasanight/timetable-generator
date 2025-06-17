@@ -527,14 +527,40 @@ def generate_timetable_image(mode, json_in, path):
         draw.rectangle([x, y, x + col_width, y + row_height], fill=colour)
 
         if full_height_by_periods[period] or full_height_override:
-            text = f"{subject}\n{room} {staff}"
+            # Two lines: subject on first line, room and staff on second line
+            line1 = subject
+            line2 = f"{room} {staff}".strip()
+            
+            # Get dimensions for each line separately
+            line1_bbox = draw.textbbox((0, 0), line1, font=font)
+            line1_width = line1_bbox[2] - line1_bbox[0]
+            line1_height = line1_bbox[3] - line1_bbox[1]
+            
+            line2_bbox = draw.textbbox((0, 0), line2, font=font)
+            line2_width = line2_bbox[2] - line2_bbox[0]
+            line2_height = line2_bbox[3] - line2_bbox[1]
+            
+            # Add proper line spacing (typically 1.2-1.5 times font height)
+            line_spacing = 2  # Extra pixels between lines
+            total_text_height = line1_height + line2_height + line_spacing
+            
+            # Calculate starting y position to center the text block vertically
+            text_start_y = y + (row_height - total_text_height) / 2
+            
+            # Draw first line centered horizontally
+            line1_x = x + (col_width - line1_width) / 2
+            draw.text((line1_x, text_start_y - 1), line1, fill="black", font=font)
+            
+            # Draw second line centered horizontally with proper spacing
+            line2_x = x + (col_width - line2_width) / 2
+            draw.text((line2_x, text_start_y + line1_height + line_spacing - 1), line2, fill="black", font=font)
         else:
-            text = f"{room} {staff}"
-        
-        text_bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
-        draw.text((x + (col_width - text_width) / 2, y + (row_height - text_height) / 2 - 1), text, fill="black", font=font)
+            # Single line: just room and staff
+            text = f"{room} {staff}".strip()
+            text_bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            draw.text((x + (col_width - text_width) / 2, y + (row_height - text_height) / 2 - 1), text, fill="black", font=font)
 
     # draw gridlines
     draw.line([margin, margin, margin, margin + table_height], fill="black", width=1)
