@@ -264,7 +264,7 @@ button.danger {
     table-layout: fixed;
     font-family: Arial, sans-serif;
     /* Consistent font family */
-    border: 1.5px solid #333;
+    border: 1px solid #333;
     /* Add thick outer border */
 }
 
@@ -275,7 +275,7 @@ button.danger {
     width: 36px;
     height: 20px;
     min-height: 20px;
-    border: 0.5px solid #333;
+    border: 0.25px solid #333;
     /* Change from 1px to 0.5px */
     text-align: center;
     vertical-align: middle;

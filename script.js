@@ -821,6 +821,22 @@ function downloadImage() {
             // Draw original canvas centered with 8px padding (4px * scale 2)
             ctx.drawImage(originalCanvas, 8, 8);
 
+            // Draw top and left borders with proper thickness
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 3; // 1.5px * scale 2 = 3px for proper 1.5px border
+            
+            // Top border
+            ctx.beginPath();
+            ctx.moveTo(8, 8);
+            ctx.lineTo(originalCanvas.width + 8, 8);
+            ctx.stroke();
+
+            // Left border
+            ctx.beginPath();
+            ctx.moveTo(8, 8);
+            ctx.lineTo(8, originalCanvas.height + 8);
+            ctx.stroke();
+
             // Download the padded image
             const link = document.createElement("a");
             link.download = `timetable_${
