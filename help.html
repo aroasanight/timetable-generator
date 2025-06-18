@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help - Timetable Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Help page specific styles using existing base styles */
+        .help-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .help-content {
+            /* Inherits from existing .control-panel styles */
+        }
+
+        .help-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .back-button {
+            display: inline-block;
+            margin-bottom: 30px;
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        .back-button:hover {
+            color: #764ba2;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .section p {
+            color: #c0c0c0;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .step-list {
+            color: #c0c0c0;
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+
+        .step-list li {
+            margin-bottom: 10px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: rgba(60, 60, 80, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-card h4 {
+            color: #e0e0e0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .feature-card p {
+            color: #b0b0b0;
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .tip-box {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .tip-box h4 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .tip-box p {
+            color: #c0c0c0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        .warning-box {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .warning-box h4 {
+            color: #FFC107;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .warning-box p {
+            color: #c0c0c0;
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        .code-block {
+            background: rgba(30, 30, 40, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #e0e0e0;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .action-buttons {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toc {
+            background: rgba(60, 60, 80, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .toc h3 {
+            color: #e0e0e0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            margin-bottom: 8px;
+        }
+
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .toc a:hover {
+            color: #764ba2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="help-container">
+        <div class="help-content control-panel">
+            <a href="index.html" class="back-button">← Back to Home</a>
+            
+            <div class="help-header">
+                <h1>PLACEHOLDER PAGE</h1>
+                <p class="help-subtitle" style="color: #b0b0b0; font-size: 1.1em;">Learn how to create beautiful, customized timetables</p>
+            </div>
+
+            <!-- Table of Contents -->
+            <div class="toc">
+                <h3>Table of Contents</h3>
+                <ul>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#general-settings">General Settings</a></li>
+                    <li><a href="#adding-events">Adding Events & Lessons</a></li>
+                    <li><a href="#presets">Using Presets</a></li>
+                    <li><a href="#import-export">Import & Export</a></li>
+                    <li><a href="#tips">Tips & Tricks</a></li>
+                    <li><a href="#troubleshooting">Troubleshooting</a></li>
+                </ul>
+            </div>
+
+            <!-- Getting Started -->
+            <div class="section" id="getting-started">
+                <h2>Getting Started</h2>
+                <p>The Timetable Generator allows you to create professional-looking timetables for schools, work schedules, or personal planning. Here's a quick overview of how to get started:</p>
+                
+                <ol class="step-list">
+                    <li><strong>Configure General Settings:</strong> Set your name, initials, tutor group, and choose which days and periods to display</li>
+                    <li><strong>Add Events:</strong> Create lessons or appointments by clicking "Add New Event"</li>
+                    <li><strong>Generate Timetable:</strong> Click "Generate Timetable" to see your schedule</li>
+                    <li><strong>Download:</strong> Save your timetable as a PNG image</li>
+                </ol>
+
+                <div class="tip-box">
+                    <h4>💡 Quick Tip</h4>
+                    <p>Start with one of our example templates by downloading them from the home page, then modify them to suit your needs!</p>
+                </div>
+            </div>
+
+            <!-- General Settings -->
+            <div class="section" id="general-settings">
+                <h2>General Settings</h2>
+                <p>The General Settings panel lets you customize how your timetable appears:</p>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>Short Name</h4>
+                        <p>Your full name as you want it to appear on the timetable</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Initials</h4>
+                        <p>Your initials for a more compact display option</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Tutor Group</h4>
+                        <p>Your class or group identifier (e.g., "10A", "Team Alpha")</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Name Display</h4>
+                        <p>Choose how your name appears: None, Short Name, Initials, Tutor Group, or Both</p>
+                    </div>
+                </div>
+
+                <h3>Days and Periods</h3>
+                <p>Select which days of the week and which periods to include in your timetable. This allows you to create timetables for different schedules:</p>
+                <ul class="step-list">
+                    <li><strong>School Schedule:</strong> Monday-Friday with periods 1-6</li>
+                    <li><strong>Work Schedule:</strong> Monday-Friday with custom time slots</li>
+                    <li><strong>Weekend Schedule:</strong> Saturday-Sunday for personal activities</li>
+                </ul>
+            </div>
+
+            <!-- Adding Events -->
+            <div class="section" id="adding-events">
+                <h2>Adding Events & Lessons</h2>
+                <p>Events are the individual lessons, meetings, or activities that make up your timetable.</p>
+
+                <h3>Creating a New Event</h3>
+                <ol class="step-list">
+                    <li>Click the <strong>"Add New Event"</strong> button</li>
+                    <li>Select the <strong>Day</strong> and <strong>Period</strong> from the dropdown menus</li>
+                    <li>Enter the <strong>Subject</strong> (e.g., "Mathematics", "Team Meeting")</li>
+                    <li>Add the <strong>Room</strong> location (e.g., "Room 101", "Conference Room A")</li>
+                    <li>Enter the <strong>Staff</strong> name (teacher, instructor, or meeting organizer)</li>
+                    <li>Choose a <strong>Color</strong> to help categorize your events</li>
+                    <li>Click <strong>"Save Event"</strong></li>
+                </ol>
+
+                <h3>Managing Events</h3>
+                <p>Once you've added events, you can:</p>
+                <ul class="step-list">
+                    <li><strong>Edit:</strong> Click the "Edit" button next to any event to modify its details</li>
+                    <li><strong>Delete:</strong> Click the "Delete" button to remove an event</li>
+                    <li><strong>Duplicate:</strong> Use the "Duplicate" button to copy an event to different times</li>
+                </ul>
+
+                <div class="tip-box">
+                    <h4>🎨 Color Coding Tip</h4>
+                    <p>Use consistent colors for different subjects or types of activities. For example: Blue for Math, Green for Science, Red for English.</p>
+                </div>
+            </div>
+
+            <!-- Presets -->
+            <div class="section" id="presets">
+                <h2>Using Presets</h2>
+                <p>Presets allow you to save commonly used event configurations and quickly apply them to new time slots.</p>
+
+                <h3>Creating a Preset</h3>
+                <ol class="step-list">
+                    <li>Add an event with all the details you want to save</li>
+                    <li>In the events list, click <strong>"Save as Preset"</strong> on that event</li>
+                    <li>Give your preset a memorable name</li>
+                    <li>The preset will appear in the Lesson Presets panel</li>
+                </ol>
+
+                <h3>Using a Preset</h3>
+                <ol class="step-list">
+                    <li>When adding a new event, select a preset from the dropdown at the top of the modal</li>
+                    <li>All fields will be automatically filled with the preset values</li>
+                    <li>You can still modify any field before saving</li>
+                </ol>
+
+                <div class="tip-box">
+                    <h4>📚 Preset Ideas</h4>
+                    <p>Create presets for: Regular subjects with the same teacher and room, Recurring meetings, Break times, Study periods, or Laboratory sessions.</p>
+                </div>
+            </div>
+
+            <!-- Import Export -->
+            <div class="section" id="import-export">
+                <h2>Import & Export</h2>
+                <p>Save your work and share timetables using the JSON import/export feature.</p>
+
+                <h3>Exporting Your Timetable</h3>
+                <ol class="step-list">
+                    <li>Click <strong>"Manage JSON"</strong> in the Current Lessons panel</li>
+                    <li>Click <strong>"Export to Textarea"</strong> to see your data</li>
+                    <li>Click <strong>"Download JSON File"</strong> to save it to your computer</li>
+                </ol>
+
+                <h3>Importing a Timetable</h3>
+                <ol class="step-list">
+                    <li>Click <strong>"Manage JSON"</strong></li>
+                    <li>Either paste JSON data into the textarea and click <strong>"Import JSON"</strong></li>
+                    <li>Or use <strong>"Choose JSON File"</strong> to upload a saved file</li>
+                </ol>
+
+                <div class="warning-box">
+                    <h4>⚠️ Import Warning</h4>
+                    <p>Importing will replace all your current events and settings. Make sure to export your current work first if you want to keep it!</p>
+                </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="section" id="tips">
+                <h2>Tips & Tricks</h2>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>🚀 Quick Setup</h4>
+                        <p>Start with an example template from the home page, then customize it rather than starting from scratch.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🎯 Consistent Naming</h4>
+                        <p>Use consistent abbreviations and naming conventions for subjects and rooms throughout your timetable.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>💾 Regular Backups</h4>
+                        <p>Export your timetable regularly as JSON files to avoid losing your work.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📱 Mobile Friendly</h4>
+                        <p>The interface works on mobile devices, but desktop is recommended for easier editing.</p>
+                    </div>
+                </div>
+
+                <h3>Best Practices</h3>
+                <ul class="step-list">
+                    <li><strong>Plan First:</strong> Sketch out your timetable on paper before entering it digitally</li>
+                    <li><strong>Use Presets:</strong> Create presets for recurring events to speed up data entry</li>
+                    <li><strong>Color Strategy:</strong> Develop a color coding system and stick to it</li>
+                    <li><strong>Test Print:</strong> Generate and download your timetable to check how it looks</li>
+                    <li><strong>Keep Copies:</strong> Save different versions (weekly, term-based, etc.)</li>
+                </ul>
+            </div>
+
+            <!-- Troubleshooting -->
+            <div class="section" id="troubleshooting">
+                <h2>Troubleshooting</h2>
+
+                <h3>Common Issues</h3>
+
+                <div class="feature-card" style="margin-bottom: 20px;">
+                    <h4>Timetable Not Generating</h4>
+                    <p><strong>Solution:</strong> Make sure you have at least one day and one period selected, and at least one event added.</p>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 20px;">
+                    <h4>Events Not Showing</h4>
+                    <p><strong>Solution:</strong> Check that the event's day and period are selected in the General Settings panel.</p>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 20px;">
+                    <h4>JSON Import Failed</h4>
+                    <p><strong>Solution:</strong> Ensure the JSON data is valid and was exported from this application. Check for any syntax errors.</p>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 20px;">
+                    <h4>Download Not Working</h4>
+                    <p><strong>Solution:</strong> Make sure you've generated the timetable first, and check your browser's download permissions.</p>
+                </div>
+
+                <h3>Browser Compatibility</h3>
+                <p>This application works best in modern browsers including:</p>
+                <ul class="step-list">
+                    <li>Chrome (recommended)</li>
+                    <li>Firefox</li>
+                    <li>Safari</li>
+                    <li>Edge</li>
+                </ul>
+
+                <div class="tip-box">
+                    <h4>🔧 Still Having Issues?</h4>
+                    <p>Try refreshing the page, clearing your browser cache, or using a different browser. Make sure JavaScript is enabled.</p>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="app.html" class="primary-button">Launch Timetable Generator</a>
+                <a href="index.html" class="back-button">← Back to Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
