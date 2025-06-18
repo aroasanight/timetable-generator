@@ -309,13 +309,13 @@ button.danger {
     font-size: 8px;
     /* Same as all other text */
     padding: 1px;
-    background: #e9ecef;
+    background: #9f9f9f;
 }
 
 .period-header {
     width: 40px;
     height: 20px;
-    background: #e9ecef;
+    background: #9f9f9f;
     font-weight: normal;
     font-size: 8px;
     /* Same as all other text */
