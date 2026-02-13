@@ -61,7 +61,7 @@ let subjectMappings = [
       // These are checked with startsWith() to avoid matching lesson descriptions
       // that contain "Year 10:" mid-string (e.g. "KS4 English Language: Year 10: G1")
       startsWithKeywords: [
-        "year 7:","year 8:","year 9:","year 10:","year 11:","year 12:",
+        "year 7:","year 8:","year 9:","year 10:","year 11:","year 12:","year 13:",
       ],
       subject: "Tutor", color: "#d3d3d3" },
     { keywords: ["citizenship"],            subject: "CR",    color: "#f08080" },
@@ -77,8 +77,9 @@ let subjectMappings = [
     { keywords: ["french"],                 subject: "Fr",    color: "#f08080" },
     { keywords: ["spanish"],                subject: "Sp",    color: "#f08080" },
     { keywords: ["drama"],                  subject: "Drama", color: "#ffb6c1" },
-    { keywords: ["dance"],                  subject: "Dance", color: "#db7093" },
+    { keywords: ["ks4 dance","ks5 dance"," dance: ","dance gcse"], subject: "Dance", color: "#db7093" },
     { keywords: ["art"],                    subject: "Art",   color: "#dc143c" },
+    { keywords: ["photography"],            subject: "Photo", color: "#9370db" },
     { keywords: ["media"],                  subject: "Media", color: "#ff69b4" },
 ];
 
@@ -452,6 +453,7 @@ async function processPDF() {
                     text: it.str.trim(),
                     x:   it.transform[4],   // x0 (left edge)
                     y:   it.transform[5],   // y0 (baseline, increasing upward)
+                    w:   it.width,          // text item width (used for span detection)
                 }));
 
             // ── Parse header line ──────────────────────────────────────────
@@ -470,7 +472,10 @@ async function processPDF() {
             const dayOffset = (pageNum - 1) * 5;
 
             // ── Assign each item to a (day, period) cell ──────────────────
-            const cells = {};   // key "localDay_periodIdx" → string[]
+            // cells stores { texts: string[], maxX1: number } per key.
+            // maxX1 tracks the rightmost edge of any text item in the cell,
+            // used to detect physically-spanning PM/Lunch lessons.
+            const cells = {};   // key "localDay_periodIdx" → { texts, maxX1 }
 
             for (const item of items) {
                 if (item.y >= HEADER_Y - 2) continue;   // skip header / title rows
@@ -482,24 +487,42 @@ async function processPDF() {
                 if (periodIdx === null || dayIdx === null) continue;
 
                 const key = `${dayIdx}_${periodIdx}`;
-                if (!cells[key]) cells[key] = [];
-                cells[key].push(item.text);
+                if (!cells[key]) cells[key] = { texts: [], maxX1: 0 };
+                cells[key].texts.push(item.text);
+                // item.w is the text item width from PDF.js
+                const itemX1 = item.x + (item.w || 0);
+                if (itemX1 > cells[key].maxX1) cells[key].maxX1 = itemX1;
             }
 
             // ── Merge fragments and clean up ───────────────────────────────
-            const rawCells = {};
-            for (const [key, parts] of Object.entries(cells)) {
-                let txt = parts.join(" ").replace(/\s+/g, " ").trim();
+            const rawCells = {};    // key → string
+            const cellMaxX1 = {};   // key → number (rightmost x1 seen in cell)
+            for (const [key, cell] of Object.entries(cells)) {
+                let txt = cell.texts.join(" ").replace(/\s+/g, " ").trim();
                 // Strip injected time-range strings like "(08:55-09:10)"
                 txt = txt.replace(/\(\d{2}:\d{2}-\d{2}:\d{2}\)\s*/g, "").trim();
-                if (txt) rawCells[key] = txt;
+                if (txt) {
+                    rawCells[key] = txt;
+                    cellMaxX1[key] = cell.maxX1;
+                }
             }
 
             // ── PM / Lunch span detection ──────────────────────────────────
             // period 5 = PM, period 6 = Lunch (PDF indices)
-            // If the same subject appears in both PM and Lunch for a given day,
-            // collapse into a single span event (JS period 6 = PM/Lunch span).
+            // Two scenarios produce a PM/Lunch span event (JS period 6):
+            //
+            // A) DOUBLE-ENTRY: The same lesson appears in BOTH the PM cell and
+            //    the Lunch cell (older MIS export style). Detected by matching
+            //    subject in both cells.
+            //
+            // B) PHYSICAL SPAN: The lesson appears only in the PM cell but its
+            //    text item extends visually into the Lunch column — i.e. the
+            //    rightmost x1 of the PM cell >= the left edge of the Lunch column
+            //    (PDF_COL_BOUNDS[6] = 562). The Lunch cell will be empty.
+            //    This is how newer MIS exports render spanning lessons.
             const suppressedKeys = new Set();
+            // Left boundary of the Lunch column
+            const LUNCH_COL_LEFT = PDF_COL_BOUNDS[6]; // 562
 
             for (let d = 0; d < 5; d++) {
                 const pmKey    = `${d}_5`;
@@ -507,14 +530,24 @@ async function processPDF() {
                 const pmText    = rawCells[pmKey]    || "";
                 const lunchText = rawCells[lunchKey] || "";
 
-                if (pmText && lunchText) {
-                    const pmSub    = classifySubject(pmText);
-                    const lunchSub = classifySubject(lunchText);
-                    if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
-                        // Merge: use the longer text (more detail)
-                        rawCells[`${d}_SPAN`] = pmText.length >= lunchText.length ? pmText : lunchText;
+                if (pmText) {
+                    const pmX1 = cellMaxX1[pmKey] || 0;
+                    const physicallySpans = pmX1 >= LUNCH_COL_LEFT;
+
+                    if (lunchText) {
+                        // Scenario A: same subject in both slots
+                        const pmSub    = classifySubject(pmText);
+                        const lunchSub = classifySubject(lunchText);
+                        if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
+                            rawCells[`${d}_SPAN`] = pmText.length >= lunchText.length ? pmText : lunchText;
+                            suppressedKeys.add(pmKey);
+                            suppressedKeys.add(lunchKey);
+                        }
+                    } else if (physicallySpans) {
+                        // Scenario B: PM lesson physically spans into Lunch column
+                        rawCells[`${d}_SPAN`] = pmText;
                         suppressedKeys.add(pmKey);
-                        suppressedKeys.add(lunchKey);
+                        // lunchKey is already absent from rawCells, nothing to suppress
                     }
                 }
             }
