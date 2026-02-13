@@ -8,6 +8,7 @@ let currentData = {
 
 let currentEditIndex = -1;
 let presets = [];
+let includeStudyPeriods = true;  // Default: include study periods from PDF import
 
 const dayNames = [
     "Mon1","Tue1","Wed1","Thu1","Fri1",
@@ -77,7 +78,7 @@ let subjectMappings = [
     { keywords: ["french"],                 subject: "Fr",    color: "#f08080" },
     { keywords: ["spanish"],                subject: "Sp",    color: "#f08080" },
     { keywords: ["drama"],                  subject: "Drama", color: "#ffb6c1" },
-    { keywords: ["ks4 dance","ks5 dance"," dance: ","dance gcse"], subject: "Dance", color: "#db7093" },
+    { keywords: ["dance"],              subject: "Dance", color: "#db7093" },
     { keywords: ["art"],                    subject: "Art",   color: "#dc143c" },
     { keywords: ["photography"],            subject: "Photo", color: "#9370db" },
     { keywords: ["media"],                  subject: "Media", color: "#ff69b4" },
@@ -429,6 +430,12 @@ async function processPDF() {
 
     const statusDiv = document.getElementById("pdfStatus");
     statusDiv.textContent = "Loading PDF.js…";
+    
+    // Read the include study periods checkbox
+    const includeStudyCheckbox = document.getElementById("includeStudyPeriods");
+    if (includeStudyCheckbox) {
+        includeStudyPeriods = includeStudyCheckbox.checked;
+    }
 
     try {
         await loadPDFJS();
@@ -629,6 +636,17 @@ async function processPDF() {
 function classifySubject(text) {
     if (!text || !text.trim()) return null;
     const lower = text.toLowerCase();
+    
+    // Filter out "6th Form Attendance" periods entirely - don't add them to timetable
+    if (lower.includes("6th form attendance") || lower.includes("attendance y1")) {
+        return null;
+    }
+    
+    // Filter out study periods if the toggle is off
+    if (!includeStudyPeriods && lower.includes("6th form study")) {
+        return null;
+    }
+    
     for (const mapping of subjectMappings) {
         // Regular includes() keywords
         for (const kw of (mapping.keywords || [])) {
