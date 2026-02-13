@@ -6,6 +6,7 @@ masspdf/*
 *.DS_Store
 *._*
 *.record
+test-material/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
