@@ -39,6 +39,11 @@ let subjectMappings = [
     { keywords: ["maths"],                  subject: "Maths", color: "#87ceeb" },
     { keywords: ["music"],                  subject: "Music", color: "#3cb371" },
     { keywords: ["6th form study"],         subject: "Study", color: "#ff4500" },
+    // Tutor cells always BEGIN with "Year N:" — the startsWithKeywords list is
+    // checked with startsWith() rather than includes(), so "Year 10:" in the
+    // middle of a lesson description (e.g. English Language) won't match.
+    // The suffix keywords (": gb" etc.) are safe to keep as includes() matches
+    // because they only ever appear in actual tutor cell text.
     { keywords: [
         ": gb",": pp",": vf",": de",": bw",": nr",
         "7: a1","7: a2","7: a3","7: w1","7: w2","7: w3",
@@ -52,8 +57,13 @@ let subjectMappings = [
         "9: n1","9: n2","9: n3",
         "10: a4","10: w4","10: f4","10: g4","10: n4",
         "11: a5","11: w5","11: f5","11: g5","11: n5",
-        "year 12:","year 7:","year 8:","year 9:","year 10:","year 11:",
-    ], subject: "Tutor", color: "#d3d3d3" },
+      ],
+      // These are checked with startsWith() to avoid matching lesson descriptions
+      // that contain "Year 10:" mid-string (e.g. "KS4 English Language: Year 10: G1")
+      startsWithKeywords: [
+        "year 7:","year 8:","year 9:","year 10:","year 11:","year 12:",
+      ],
+      subject: "Tutor", color: "#d3d3d3" },
     { keywords: ["citizenship"],            subject: "CR",    color: "#f08080" },
     { keywords: [" pe ","physical education"], subject: "PE", color: "#4169e1" },
     { keywords: ["science"],                subject: "Sci",   color: "#32cd32" },
@@ -587,8 +597,17 @@ function classifySubject(text) {
     if (!text || !text.trim()) return null;
     const lower = text.toLowerCase();
     for (const mapping of subjectMappings) {
-        for (const kw of mapping.keywords) {
+        // Regular includes() keywords
+        for (const kw of (mapping.keywords || [])) {
             if (lower.includes(kw.toLowerCase())) {
+                return { subject: mapping.subject, color: mapping.color };
+            }
+        }
+        // startsWith() keywords — used for Tutor to avoid false positives where
+        // lesson descriptions contain "Year 10:" mid-string
+        // (e.g. "KS4 English Language: Year 10: G1 BM")
+        for (const kw of (mapping.startsWithKeywords || [])) {
+            if (lower.startsWith(kw.toLowerCase())) {
                 return { subject: mapping.subject, color: mapping.color };
             }
         }
@@ -639,13 +658,21 @@ function renderSubjectMappingsUI() {
     subjectMappings.forEach((mapping, index) => {
         const row = document.createElement("div");
         row.style.cssText = "display:flex;gap:6px;align-items:center;margin-bottom:6px;";
+        const kwVal = (mapping.keywords || []).join(", ");
+        const swVal = (mapping.startsWithKeywords || []).join(", ");
+        // Show startsWith field only for rows that already have one (e.g. Tutor)
+        const swField = swVal ? `<input type="text" value="${swVal}" placeholder="startsWith keywords"
+    title="These keywords are matched at the START of cell text only (safer for common words)"
+    style="flex:1;min-width:0;padding:4px;background:#1e1e30;color:#c0c0e0;border:1px solid #447;border-radius:4px;font-style:italic;"
+    onchange="updateMapping(${index},'startsWithKeywords',this.value)">` : "";
         row.innerHTML = `
 <input type="text" value="${mapping.subject}" placeholder="Subject"
     style="width:68px;padding:4px;background:#2a2a3e;color:#e0e0e0;border:1px solid #555;border-radius:4px;"
     onchange="updateMapping(${index},'subject',this.value)">
-<input type="text" value="${mapping.keywords.join(', ')}" placeholder="keywords, comma separated"
+<input type="text" value="${kwVal}" placeholder="keywords, comma separated"
     style="flex:1;min-width:0;padding:4px;background:#2a2a3e;color:#e0e0e0;border:1px solid #555;border-radius:4px;"
     onchange="updateMapping(${index},'keywords',this.value)">
+${swField}
 <input type="color" value="${mapping.color}"
     style="width:36px;height:28px;border:none;cursor:pointer;background:none;padding:0;"
     onchange="updateMapping(${index},'color',this.value)">
@@ -656,8 +683,8 @@ function renderSubjectMappingsUI() {
 }
 
 function updateMapping(index, field, value) {
-    if (field === "keywords") {
-        subjectMappings[index].keywords = value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    if (field === "keywords" || field === "startsWithKeywords") {
+        subjectMappings[index][field] = value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
     } else {
         subjectMappings[index][field] = value;
     }
