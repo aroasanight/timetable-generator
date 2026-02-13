@@ -21,12 +21,19 @@ const periodHeights = [
 ];
 
 let selectedDays    = Array(10).fill(true);
-let selectedPeriods = Array(10).fill(true);
+// "After" (index 9) is hidden by default
+let selectedPeriods = [true,true,true,true,true,true,true,true,true,false];
 let customPeriodHeights = [...periodHeights];
 
 // ─── Subject mapping configuration ───────────────────────────────────────────
 // Each entry: { keywords: [...], subject: "...", color: "#rrggbb" }
 // Keywords are lowercase substrings; first match wins.
+//
+// TUTOR NOTE: tutor group entries in the PDF appear as e.g. "Year 10: G4" or
+// "Year 12: GB".  The keywords below match the ": XX" suffix forms so they
+// don't collide with room codes (G1, G2 etc.) which appear as standalone words
+// at the END of cell text.  Single-letter+digit keywords (" g1" etc.) have been
+// removed for this reason — use the colon-prefixed forms instead.
 let subjectMappings = [
     { keywords: ["computing"],              subject: "Comp",  color: "#7b68ee" },
     { keywords: ["maths"],                  subject: "Maths", color: "#87ceeb" },
@@ -34,11 +41,17 @@ let subjectMappings = [
     { keywords: ["6th form study"],         subject: "Study", color: "#ff4500" },
     { keywords: [
         ": gb",": pp",": vf",": de",": bw",": nr",
+        "7: a1","7: a2","7: a3","7: w1","7: w2","7: w3",
+        "7: g1","7: g2","7: g3","7: f1","7: f2","7: f3",
+        "7: n1","7: n2","7: n3",
+        "8: a1","8: a2","8: a3","8: w1","8: w2","8: w3",
+        "8: g1","8: g2","8: g3","8: f1","8: f2","8: f3",
+        "8: n1","8: n2","8: n3",
+        "9: a1","9: a2","9: a3","9: w1","9: w2","9: w3",
+        "9: g1","9: g2","9: g3","9: f1","9: f2","9: f3",
+        "9: n1","9: n2","9: n3",
         "10: a4","10: w4","10: f4","10: g4","10: n4",
         "11: a5","11: w5","11: f5","11: g5","11: n5",
-        " a1"," a2"," a3"," w1"," w2"," w3",
-        " g1"," g2"," g3"," f1"," f2"," f3",
-        " n1"," n2"," n3",
         "year 12:","year 7:","year 8:","year 9:","year 10:","year 11:",
     ], subject: "Tutor", color: "#d3d3d3" },
     { keywords: ["citizenship"],            subject: "CR",    color: "#f08080" },
