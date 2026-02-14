@@ -41,6 +41,10 @@ let subjectMappings = [
     { keywords: ["maths"],                  subject: "Maths", color: "#87ceeb" },
     { keywords: ["music"],                  subject: "Music", color: "#3cb371" },
     { keywords: ["6th form study"],         subject: "Study", color: "#ff4500" },
+    { keywords: ["ks4 ict", "ict wjec"],    subject: "IT",    color: "#4682b4" },
+    { keywords: ["construction"],           subject: "Const", color: "#cd853f" },
+    { keywords: ["core pe"],                subject: "PE",    color: "#4169e1" },
+    { keywords: ["enterprise"],             subject: "Ent",   color: "#ff8c00" },
     // Tutor cells always BEGIN with "Year N:" — the startsWithKeywords list is
     // checked with startsWith() rather than includes(), so "Year 10:" in the
     // middle of a lesson description (e.g. English Language) won't match.
@@ -398,19 +402,21 @@ const PDF_DAY_COL_BOUNDS = [
 // Period row y-boundaries (PDF.js uses bottom-up coordinates, y increases upward)
 // Page height is ~595pt for A4 landscape
 // Converting from pdfplumber analysis: pdfjs_y = 595 - pdfplumber_y
-// Rows: AM Tutor, P1, P2, Break, P3, PM Tutor, Lunch, P4, P5, bottom
+// Boundaries placed at midpoints between period rows
+// Rows: Header, AM Tutor, P1, P2, Break, P3, PM Tutor, Lunch, P4, P5, bottom
 const PDF_PERIOD_ROW_Y = [
-    520.0,  // Header (595 - 75)
-    500.0,  // AM Tutor (595 - 95)
-    471.0,  // P1 (595 - 124)
-    412.0,  // P2 (595 - 183)
-    346.0,  // Break (595 - 249)
-    324.0,  // P3 (595 - 271)
-    265.0,  // PM Tutor (595 - 330)
-    221.0,  // Lunch (595 - 374)
-    191.0,  // P4 (595 - 404)
-    132.0,  // P5 (595 - 463)
-    75.0,   // Bottom (595 - 520)
+    545.0,  // Above header
+    520.0,  // Header line (595 - 75)
+    510.0,  // Between header and AM Tutor (595 - 85)
+    489.0,  // Between AM Tutor and P1 (595 - 106)
+    441.5,  // Between P1 and P2 (595 - 153.5)
+    379.0,  // Between P2 and Break (595 - 216)
+    335.0,  // Between Break and P3 (595 - 260)
+    294.5,  // Between P3 and PM Tutor (595 - 300.5)
+    243.0,  // Between PM Tutor and Lunch (595 - 352)
+    206.0,  // Between Lunch and P4 (595 - 389)
+    161.5,  // Between P4 and P5 (595 - 433.5)
+    109.0,  // Bottom (595 - 486)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
@@ -459,15 +465,18 @@ function getPeriodBounds_ParentView() {
 
 function getPeriodForY_ParentView(y, midpoints) {
     // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
+    // midpoints[0] is above header, midpoints[1] is the header line
+    // So we start checking from midpoints[2] onwards for AM Tutor (period 0)
     // In bottom-up coords, higher y = higher on page (earlier periods)
-    for (let i = 0; i < midpoints.length - 1; i++) {
+    
+    for (let i = 2; i < midpoints.length - 1; i++) {
         if (y >= midpoints[i + 1] && y < midpoints[i]) {
-            return i;  // This maps directly to period index
+            return i - 2;  // Subtract 2 to get period index (skip header boundaries)
         }
     }
     // Check if it's in the last (bottom-most) period
-    if (y >= midpoints[midpoints.length - 1]) {
-        return midpoints.length - 1;
+    if (y >= midpoints[midpoints.length - 1] && y < midpoints[2]) {
+        return 8;  // P5
     }
     return null;
 }
@@ -621,22 +630,25 @@ async function processPDF() {
                 const pmText    = rawCells[pmKey]    || "";
                 const lunchText = rawCells[lunchKey] || "";
 
-                if (pmText) {
-                    // Physical span detection only applies to staff view (periods as columns)
+                if (pmText && lunchText) {
+                    // Check if both cells have the same subject
+                    const pmSub    = classifySubject(pmText);
+                    const lunchSub = classifySubject(lunchText);
+                    
+                    if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
+                        // Scenario A: same subject in both slots (spanning lesson)
+                        // In parent view, PM might have minimal info (e.g., "MUS VF") and 
+                        // Lunch has full details. Prefer the longer/more complete text.
+                        rawCells[`${d}_SPAN`] = pmText.length >= lunchText.length ? pmText : lunchText;
+                        suppressedKeys.add(pmKey);
+                        suppressedKeys.add(lunchKey);
+                    }
+                } else if (pmText && !lunchText && pdfDaysAsRows) {
+                    // Scenario B: PM lesson physically spans into Lunch column (staff view only)
                     const pmX1 = cellMaxX1[pmKey] || 0;
-                    const physicallySpans = pdfDaysAsRows && (pmX1 >= LUNCH_COL_LEFT);
-
-                    if (lunchText) {
-                        // Scenario A: same subject in both slots
-                        const pmSub    = classifySubject(pmText);
-                        const lunchSub = classifySubject(lunchText);
-                        if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
-                            rawCells[`${d}_SPAN`] = pmText.length >= lunchText.length ? pmText : lunchText;
-                            suppressedKeys.add(pmKey);
-                            suppressedKeys.add(lunchKey);
-                        }
-                    } else if (physicallySpans) {
-                        // Scenario B: PM lesson physically spans into Lunch column
+                    const physicallySpans = pmX1 >= LUNCH_COL_LEFT;
+                    
+                    if (physicallySpans) {
                         rawCells[`${d}_SPAN`] = pmText;
                         suppressedKeys.add(pmKey);
                         // lunchKey is already absent from rawCells, nothing to suppress
