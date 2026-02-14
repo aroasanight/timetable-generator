@@ -387,18 +387,32 @@ const HEADER_Y    = 512.3;
 // Transposed layout where days go across and periods go down
 // Day column x-boundaries (left edge of each day column):
 const PDF_DAY_COL_BOUNDS = [
-    107.0,   // Monday (or first day)
-    232.0,   // Tuesday
-    357.0,   // Wednesday  
-    482.0,   // Thursday
-    607.0,   // Friday
-    732.0,   // right edge (or Saturday if present)
+    107.0,   // Monday
+    245.0,   // Tuesday
+    383.0,   // Wednesday  
+    521.0,   // Thursday
+    660.0,   // Friday
+    800.0,   // right edge
 ];
 
-// Period row y-boundaries (baseline of each period row):
-// These correspond to the time slots: 08:55-09:10, 09:10-10:10, etc.
-const PDF_PERIOD_ROW_Y = [527.0, 472.0, 416.0, 383.0, 327.0, 294.0, 238.0, 182.0, 126.0];
-const PARENT_HEADER_Y = 560.0;
+// Period row y-boundaries (PDF.js uses bottom-up coordinates, y increases upward)
+// Page height is ~595pt for A4 landscape
+// Converting from pdfplumber analysis: pdfjs_y = 595 - pdfplumber_y
+// Rows: AM Tutor, P1, P2, Break, P3, PM Tutor, Lunch, P4, P5, bottom
+const PDF_PERIOD_ROW_Y = [
+    520.0,  // Header (595 - 75)
+    500.0,  // AM Tutor (595 - 95)
+    471.0,  // P1 (595 - 124)
+    412.0,  // P2 (595 - 183)
+    346.0,  // Break (595 - 249)
+    324.0,  // P3 (595 - 271)
+    265.0,  // PM Tutor (595 - 330)
+    221.0,  // Lunch (595 - 374)
+    191.0,  // P4 (595 - 404)
+    132.0,  // P5 (595 - 463)
+    75.0,   // Bottom (595 - 520)
+];
+const PARENT_HEADER_Y = 520.0;  // Day headers
 
 function getDayBounds() {
     // Returns [topBound, ...midpoints, bottomBound] so that
@@ -435,17 +449,25 @@ function getDayForX_ParentView(x) {
 
 function getPeriodBounds_ParentView() {
     // Returns [topBound, ...midpoints, bottomBound] for period rows
-    const mp = [PARENT_HEADER_Y];
+    // In bottom-up coordinates, "top" means higher y value
+    const mp = [];
     for (let i = 0; i < PDF_PERIOD_ROW_Y.length - 1; i++) {
         mp.push((PDF_PERIOD_ROW_Y[i] + PDF_PERIOD_ROW_Y[i + 1]) / 2);
     }
-    mp.push(0);
     return mp;
 }
 
 function getPeriodForY_ParentView(y, midpoints) {
-    for (let i = 0; i < 9; i++) {  // 9 periods (AM, P1, P2, Break, P3, PM, Lunch, P4, P5)
-        if (y < midpoints[i] && y >= midpoints[i + 1]) return i;
+    // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
+    // In bottom-up coords, higher y = higher on page (earlier periods)
+    for (let i = 0; i < midpoints.length - 1; i++) {
+        if (y >= midpoints[i + 1] && y < midpoints[i]) {
+            return i;  // This maps directly to period index
+        }
+    }
+    // Check if it's in the last (bottom-most) period
+    if (y >= midpoints[midpoints.length - 1]) {
+        return midpoints.length - 1;
     }
     return null;
 }
