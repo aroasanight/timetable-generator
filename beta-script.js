@@ -401,22 +401,22 @@ const PDF_DAY_COL_BOUNDS = [
 
 // Period row y-boundaries (PDF.js uses bottom-up coordinates, y increases upward)
 // Page height is ~595pt for A4 landscape
-// Converting from pdfplumber analysis: pdfjs_y = 595 - pdfplumber_y
-// Boundaries placed at midpoints between period rows
-// Rows: Header, AM Tutor, P1, P2, Break, P3, PM Tutor, Lunch, P4, P5, bottom
+// Based on actual data analysis, periods are at these y ranges (PDF.js coords):
+// AM Tutor: 500-485, P1: 470-450, P2: 410-390, Break: 345
+// P3: 325-300, PM Tutor: 265-240, Lunch: 220, P4: 190-170, P5: 130-110
+// Boundaries should be BETWEEN these ranges
 const PDF_PERIOD_ROW_Y = [
-    545.0,  // Above header
-    520.0,  // Header line (595 - 75)
-    510.0,  // Between header and AM Tutor (595 - 85)
-    489.0,  // Between AM Tutor and P1 (595 - 106)
-    441.5,  // Between P1 and P2 (595 - 153.5)
-    379.0,  // Between P2 and Break (595 - 216)
-    335.0,  // Between Break and P3 (595 - 260)
-    294.5,  // Between P3 and PM Tutor (595 - 300.5)
-    243.0,  // Between PM Tutor and Lunch (595 - 352)
-    206.0,  // Between Lunch and P4 (595 - 389)
-    161.5,  // Between P4 and P5 (595 - 433.5)
-    109.0,  // Bottom (595 - 486)
+    520.0,  // Above everything
+    492.5,  // Between header and AM Tutor (midpoint of 500-485)
+    477.5,  // Between AM Tutor (485) and P1 (470)
+    430.0,  // Between P1 (450) and P2 (410)
+    367.5,  // Between P2 (390) and Break (345)
+    335.0,  // Between Break (345) and P3 (325)
+    282.5,  // Between P3 (300) and PM Tutor (265)
+    230.0,  // Between PM Tutor (240) and Lunch (220)
+    195.0,  // Between Lunch (220) and P4 (190)
+    150.0,  // Between P4 (170) and P5 (130)
+    100.0,  // Below P5 (below 110)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
@@ -454,29 +454,22 @@ function getDayForX_ParentView(x) {
 }
 
 function getPeriodBounds_ParentView() {
-    // Returns [topBound, ...midpoints, bottomBound] for period rows
-    // In bottom-up coordinates, "top" means higher y value
-    const mp = [];
-    for (let i = 0; i < PDF_PERIOD_ROW_Y.length - 1; i++) {
-        mp.push((PDF_PERIOD_ROW_Y[i] + PDF_PERIOD_ROW_Y[i + 1]) / 2);
-    }
-    return mp;
+    // Simply return the boundaries as-is
+    return PDF_PERIOD_ROW_Y;
 }
 
-function getPeriodForY_ParentView(y, midpoints) {
+function getPeriodForY_ParentView(y, boundaries) {
+    // boundaries[0] = 520 (above everything)
+    // boundaries[1] = 492.5 (between header and AM Tutor) → period 0 (AM Tutor)
+    // boundaries[2] = 477.5 (between AM and P1) → period 1 (P1)
+    // ... and so on
     // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
-    // midpoints[0] is above header, midpoints[1] is the header line
-    // So we start checking from midpoints[2] onwards for AM Tutor (period 0)
-    // In bottom-up coords, higher y = higher on page (earlier periods)
     
-    for (let i = 2; i < midpoints.length - 1; i++) {
-        if (y >= midpoints[i + 1] && y < midpoints[i]) {
-            return i - 2;  // Subtract 2 to get period index (skip header boundaries)
+    // Skip boundary[0] which is above everything
+    for (let i = 1; i < boundaries.length - 1; i++) {
+        if (y < boundaries[i] && y >= boundaries[i + 1]) {
+            return i - 1;  // Map to period index (subtract 1 because we skip boundary[0])
         }
-    }
-    // Check if it's in the last (bottom-most) period
-    if (y >= midpoints[midpoints.length - 1] && y < midpoints[2]) {
-        return 8;  // P5
     }
     return null;
 }
