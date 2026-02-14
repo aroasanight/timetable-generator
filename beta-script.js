@@ -45,6 +45,8 @@ let subjectMappings = [
     { keywords: ["construction"],           subject: "Const", color: "#cd853f" },
     { keywords: ["core pe"],                subject: "PE",    color: "#4169e1" },
     { keywords: ["enterprise"],             subject: "Ent",   color: "#ff8c00" },
+    { keywords: ["design technology"],      subject: "DT",    color: "#9370db" },
+    { keywords: ["sociology"],              subject: "Soci",  color: "#ff69b4" },
     // Tutor cells always BEGIN with "Year N:" — the startsWithKeywords list is
     // checked with startsWith() rather than includes(), so "Year 10:" in the
     // middle of a lesson description (e.g. English Language) won't match.
