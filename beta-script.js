@@ -401,22 +401,28 @@ const PDF_DAY_COL_BOUNDS = [
 
 // Period row y-boundaries (PDF.js uses bottom-up coordinates, y increases upward)
 // Page height is ~595pt for A4 landscape
-// Based on actual data analysis, periods are at these y ranges (PDF.js coords):
-// AM Tutor: 500-485, P1: 470-450, P2: 410-390, Break: 345
-// P3: 325-300, PM Tutor: 265-240, Lunch: 220, P4: 190-170, P5: 130-110
-// Boundaries should be BETWEEN these ranges
+// Based on pdfplumber table extraction showing actual row structure:
+// Row 1 (AM Tutor 08:55-09:10): y=95-~110 → PDF.js: 500-485
+// Row 2 (P1 09:10-10:10): y=~110-~183 → PDF.js: 485-412
+// Row 3 (P2 10:10-11:10): y=~183-~250 → PDF.js: 412-345  
+// Row 4 (Break 11:10-11:30): y=~250-~270 → PDF.js: 345-325
+// Row 5 (P3 11:30-12:30): y=~270-~330 → PDF.js: 325-265
+// Row 6 (PM Tutor 12:30-12:45): y=~330-~375 → PDF.js: 265-220
+// Row 7 (Lunch 12:45-13:30): y=~375-~405 → PDF.js: 220-190
+// Row 8 (P4 13:30-14:30): y=~405-~465 → PDF.js: 190-130
+// Row 9 (P5 14:30-15:30): y=~465-~490 → PDF.js: 130-105
 const PDF_PERIOD_ROW_Y = [
-    520.0,  // Above everything
-    492.5,  // Between header and AM Tutor (midpoint of 500-485)
-    477.5,  // Between AM Tutor (485) and P1 (470)
-    430.0,  // Between P1 (450) and P2 (410)
-    367.5,  // Between P2 (390) and Break (345)
-    335.0,  // Between Break (345) and P3 (325)
-    282.5,  // Between P3 (300) and PM Tutor (265)
-    230.0,  // Between PM Tutor (240) and Lunch (220)
-    195.0,  // Between Lunch (220) and P4 (190)
-    150.0,  // Between P4 (170) and P5 (130)
-    100.0,  // Below P5 (below 110)
+    530.0,  // Above table
+    500.0,  // Top of AM Tutor (595 - 95)
+    485.0,  // Bottom of AM Tutor / Top of P1 (595 - 110)
+    412.0,  // Bottom of P1 / Top of P2 (595 - 183)
+    345.0,  // Bottom of P2 / Top of Break (595 - 250)
+    325.0,  // Bottom of Break / Top of P3 (595 - 270)
+    265.0,  // Bottom of P3 / Top of PM Tutor (595 - 330)
+    220.0,  // Bottom of PM Tutor / Top of Lunch (595 - 375)
+    190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
+    130.0,  // Bottom of P4 / Top of P5 (595 - 465)
+    105.0,  // Bottom of P5 (595 - 490)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
@@ -459,16 +465,17 @@ function getPeriodBounds_ParentView() {
 }
 
 function getPeriodForY_ParentView(y, boundaries) {
-    // boundaries[0] = 520 (above everything)
-    // boundaries[1] = 492.5 (between header and AM Tutor) → period 0 (AM Tutor)
-    // boundaries[2] = 477.5 (between AM and P1) → period 1 (P1)
+    // boundaries represent the edges between table rows
+    // boundaries[0] = 530 (above table)
+    // boundaries[1] = 500 (top of AM Tutor) 
+    // boundaries[2] = 485 (bottom of AM Tutor / top of P1)
     // ... and so on
     // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
     
-    // Skip boundary[0] which is above everything
-    for (let i = 1; i < boundaries.length - 1; i++) {
-        if (y < boundaries[i] && y >= boundaries[i + 1]) {
-            return i - 1;  // Map to period index (subtract 1 because we skip boundary[0])
+    // Period i occupies the space: boundaries[i+1] > y >= boundaries[i+2]
+    for (let i = 0; i < 9; i++) {  // 9 periods
+        if (y <= boundaries[i + 1] && y > boundaries[i + 2]) {
+            return i;
         }
     }
     return null;
@@ -609,12 +616,11 @@ async function processPDF() {
             //    subject in both cells.
             //
             // B) PHYSICAL SPAN (staff view only): The lesson appears only in the PM cell but its
-            //    text item extends visually into the Lunch column — i.e. the
-            //    rightmost x1 of the PM cell >= the left edge of the Lunch column
-            //    (PDF_COL_BOUNDS[6] = 562). The Lunch cell will be empty.
-            //    This is how newer MIS exports render spanning lessons.
+            //    text item extends visually into the Lunch column.
+            //
+            // C) PARENT VIEW SPANNING: PM Tutor has most of the lesson details,
+            //    Lunch has just the staff code or room. Combine them.
             const suppressedKeys = new Set();
-            // Left boundary of the Lunch column (staff view only)
             const LUNCH_COL_LEFT = PDF_COL_BOUNDS[6]; // 562
 
             for (let d = 0; d < 5; d++) {
@@ -629,10 +635,11 @@ async function processPDF() {
                     const lunchSub = classifySubject(lunchText);
                     
                     if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
-                        // Scenario A: same subject in both slots (spanning lesson)
-                        // In parent view, PM might have minimal info (e.g., "MUS VF") and 
-                        // Lunch has full details. Prefer the longer/more complete text.
-                        rawCells[`${d}_SPAN`] = pmText.length >= lunchText.length ? pmText : lunchText;
+                        // Scenario A/C: same subject in both slots (spanning lesson)
+                        // In parent view: PM has main content, Lunch might have just staff/room
+                        // Combine both texts to get complete information
+                        const combinedText = pmText + " " + lunchText;
+                        rawCells[`${d}_SPAN`] = combinedText;
                         suppressedKeys.add(pmKey);
                         suppressedKeys.add(lunchKey);
                     }
