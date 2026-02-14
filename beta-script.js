@@ -9,6 +9,7 @@ let currentData = {
 let currentEditIndex = -1;
 let presets = [];
 let includeStudyPeriods = true;  // Default: include study periods from PDF import
+let pdfDaysAsRows = true;  // Default: staff view (days as rows, periods as columns)
 
 const dayNames = [
     "Mon1","Tue1","Wed1","Thu1","Fri1",
@@ -347,6 +348,7 @@ function updateEventsList() {
 
 // ─── PDF Import ───────────────────────────────────────────────────────────────
 //
+// STAFF VIEW Layout (days as rows, periods as columns):
 // Layout of the MIS-generated timetable PDF (landscape A4, ~841.9 × 595.3 pts):
 //
 //   Row 1  y≈544  Title: "Timetable for Name , Tutor , Week A, ..."
@@ -381,6 +383,23 @@ const PDF_COL_BOUNDS = [
 const DAY_LABEL_Y = [458.3, 372.8, 287.3, 201.8, 116.3];
 const HEADER_Y    = 512.3;
 
+// PARENT VIEW Layout (days as columns, periods as rows):
+// Transposed layout where days go across and periods go down
+// Day column x-boundaries (left edge of each day column):
+const PDF_DAY_COL_BOUNDS = [
+    107.0,   // Monday (or first day)
+    232.0,   // Tuesday
+    357.0,   // Wednesday  
+    482.0,   // Thursday
+    607.0,   // Friday
+    732.0,   // right edge (or Saturday if present)
+];
+
+// Period row y-boundaries (baseline of each period row):
+// These correspond to the time slots: 08:55-09:10, 09:10-10:10, etc.
+const PDF_PERIOD_ROW_Y = [527.0, 472.0, 416.0, 383.0, 327.0, 294.0, 238.0, 182.0, 126.0];
+const PARENT_HEADER_Y = 560.0;
+
 function getDayBounds() {
     // Returns [topBound, ...midpoints, bottomBound] so that
     // day i owns items where midpoints[i+1] <= y0 < midpoints[i]
@@ -401,6 +420,31 @@ function getPeriodForX(x) {
 
 function getDayForY(y, midpoints) {
     for (let i = 0; i < 5; i++) {
+        if (y < midpoints[i] && y >= midpoints[i + 1]) return i;
+    }
+    return null;
+}
+
+// Parent view helper functions (days as columns, periods as rows)
+function getDayForX_ParentView(x) {
+    for (let i = 0; i < PDF_DAY_COL_BOUNDS.length - 1; i++) {
+        if (x >= PDF_DAY_COL_BOUNDS[i] && x < PDF_DAY_COL_BOUNDS[i + 1]) return i;
+    }
+    return null;
+}
+
+function getPeriodBounds_ParentView() {
+    // Returns [topBound, ...midpoints, bottomBound] for period rows
+    const mp = [PARENT_HEADER_Y];
+    for (let i = 0; i < PDF_PERIOD_ROW_Y.length - 1; i++) {
+        mp.push((PDF_PERIOD_ROW_Y[i] + PDF_PERIOD_ROW_Y[i + 1]) / 2);
+    }
+    mp.push(0);
+    return mp;
+}
+
+function getPeriodForY_ParentView(y, midpoints) {
+    for (let i = 0; i < 9; i++) {  // 9 periods (AM, P1, P2, Break, P3, PM, Lunch, P4, P5)
         if (y < midpoints[i] && y >= midpoints[i + 1]) return i;
     }
     return null;
@@ -436,6 +480,12 @@ async function processPDF() {
     if (includeStudyCheckbox) {
         includeStudyPeriods = includeStudyCheckbox.checked;
     }
+    
+    // Read the layout orientation toggle
+    const daysAsRowsCheckbox = document.getElementById("pdfDaysAsRows");
+    if (daysAsRowsCheckbox) {
+        pdfDaysAsRows = daysAsRowsCheckbox.checked;
+    }
 
     try {
         await loadPDFJS();
@@ -447,7 +497,7 @@ async function processPDF() {
         const allEvents = [];
         let globalName = "", globalShort = "", globalTutor = "";
 
-        const midpoints = getDayBounds();
+        const midpoints = pdfDaysAsRows ? getDayBounds() : getPeriodBounds_ParentView();
 
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
             const page = await pdf.getPage(pageNum);
@@ -485,11 +535,23 @@ async function processPDF() {
             const cells = {};   // key "localDay_periodIdx" → { texts, maxX1 }
 
             for (const item of items) {
-                if (item.y >= HEADER_Y - 2) continue;   // skip header / title rows
-                if (item.x < PDF_COL_BOUNDS[0] - 2) continue; // skip left label zone
-
-                const periodIdx = getPeriodForX(item.x);
-                const dayIdx    = getDayForY(item.y, midpoints);
+                let periodIdx, dayIdx;
+                
+                if (pdfDaysAsRows) {
+                    // Staff view: days are rows, periods are columns
+                    if (item.y >= HEADER_Y - 2) continue;   // skip header / title rows
+                    if (item.x < PDF_COL_BOUNDS[0] - 2) continue; // skip left label zone
+                    
+                    periodIdx = getPeriodForX(item.x);
+                    dayIdx    = getDayForY(item.y, midpoints);
+                } else {
+                    // Parent view: days are columns, periods are rows
+                    if (item.y >= PARENT_HEADER_Y - 2) continue;   // skip header / title rows
+                    if (item.x < PDF_DAY_COL_BOUNDS[0] - 2) continue; // skip left label zone
+                    
+                    dayIdx    = getDayForX_ParentView(item.x);
+                    periodIdx = getPeriodForY_ParentView(item.y, midpoints);
+                }
 
                 if (periodIdx === null || dayIdx === null) continue;
 
@@ -522,13 +584,13 @@ async function processPDF() {
             //    the Lunch cell (older MIS export style). Detected by matching
             //    subject in both cells.
             //
-            // B) PHYSICAL SPAN: The lesson appears only in the PM cell but its
+            // B) PHYSICAL SPAN (staff view only): The lesson appears only in the PM cell but its
             //    text item extends visually into the Lunch column — i.e. the
             //    rightmost x1 of the PM cell >= the left edge of the Lunch column
             //    (PDF_COL_BOUNDS[6] = 562). The Lunch cell will be empty.
             //    This is how newer MIS exports render spanning lessons.
             const suppressedKeys = new Set();
-            // Left boundary of the Lunch column
+            // Left boundary of the Lunch column (staff view only)
             const LUNCH_COL_LEFT = PDF_COL_BOUNDS[6]; // 562
 
             for (let d = 0; d < 5; d++) {
@@ -538,8 +600,9 @@ async function processPDF() {
                 const lunchText = rawCells[lunchKey] || "";
 
                 if (pmText) {
+                    // Physical span detection only applies to staff view (periods as columns)
                     const pmX1 = cellMaxX1[pmKey] || 0;
-                    const physicallySpans = pmX1 >= LUNCH_COL_LEFT;
+                    const physicallySpans = pdfDaysAsRows && (pmX1 >= LUNCH_COL_LEFT);
 
                     if (lunchText) {
                         // Scenario A: same subject in both slots
