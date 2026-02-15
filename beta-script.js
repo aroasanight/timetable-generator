@@ -409,8 +409,8 @@ const PDF_DAY_COL_BOUNDS = [
 // Row 3 (P2 10:10-11:10): y=~183-~250 → PDF.js: 412-345  
 // Row 4 (Break 11:10-11:30): y=~250-~270 → PDF.js: 345-325
 // Row 5 (P3 11:30-12:30): y=~270-~330 → PDF.js: 325-265
-// Row 6 (PM Tutor 12:30-12:45): y=~330-~375 → PDF.js: 265-220
-// Row 7 (Lunch 12:45-13:30): y=~375-~405 → PDF.js: 220-190
+// Row 6 (PM Tutor 12:30-12:45): y=~330-~365 → PDF.js: 265-230
+// Row 7 (Lunch 12:45-13:30): y=~365-~405 → PDF.js: 230-190
 // Row 8 (P4 13:30-14:30): y=~405-~465 → PDF.js: 190-130
 // Row 9 (P5 14:30-15:30): y=~465-~492 → PDF.js: 130-103
 const PDF_PERIOD_ROW_Y = [
@@ -421,7 +421,7 @@ const PDF_PERIOD_ROW_Y = [
     345.0,  // Bottom of P2 / Top of Break (595 - 250)
     325.0,  // Bottom of Break / Top of P3 (595 - 270)
     265.0,  // Bottom of P3 / Top of PM Tutor (595 - 330)
-    220.0,  // Bottom of PM Tutor / Top of Lunch (595 - 375)
+    243.0,  // Bottom of PM Tutor / Top of Lunch (split at y=352, just above spillover at 241.7)
     190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
     130.0,  // Bottom of P4 / Top of P5 (595 - 465)
     103.0,  // Bottom of P5 (595 - 492, extended to capture staff codes at y=486)
