@@ -391,34 +391,41 @@ const HEADER_Y    = 512.3;
 
 // PARENT VIEW Layout (days as columns, periods as rows):
 // Transposed layout where days go across and periods go down
-// Day column x-boundaries — measured via pdfplumber (boundaries.txt):
+// Day column x-boundaries (left edge of each day column):
 const PDF_DAY_COL_BOUNDS = [
-    104.2,   // Monday (left edge)
-    242.9,   // Tuesday
-    381.6,   // Wednesday
-    519.8,   // Thursday
-    657.6,   // Friday
-    796.3,   // right edge
+    107.0,   // Monday
+    245.0,   // Tuesday
+    383.0,   // Wednesday  
+    521.0,   // Thursday
+    660.0,   // Friday
+    800.0,   // right edge
 ];
 
-// Period row y-boundaries (PDF.js bottom-up coordinates, measured via pdfplumber).
-// Each value is the TOP edge of the corresponding period row.
-// 9 values for 9 rows: AM, P1, P2, Break, P3, PM, Lunch, P4, P5.
-// A text item belongs to period i when:  PDF_PERIOD_ROW_Y[i] >= y > PDF_PERIOD_ROW_Y[i+1]
-// (items below PDF_PERIOD_ROW_Y[8] are in P5, items above PDF_PERIOD_ROW_Y[0] are headers)
+// Period row y-boundaries (PDF.js uses bottom-up coordinates, y increases upward)
+// Page height is ~595pt for A4 landscape
+// Based on pdfplumber table extraction showing actual row structure:
+// Row 1 (AM Tutor 08:55-09:10): y=95-~110 → PDF.js: 500-485
+// Row 2 (P1 09:10-10:10): y=~110-~183 → PDF.js: 485-412
+// Row 3 (P2 10:10-11:10): y=~183-~250 → PDF.js: 412-345  
+// Row 4 (Break 11:10-11:30): y=~250-~270 → PDF.js: 345-325
+// Row 5 (P3 11:30-12:30): y=~270-~330 → PDF.js: 325-265
+// Row 6 (PM Tutor 12:30-12:45): y=~330-~365 → PDF.js: 265-230
+// Row 7 (Lunch 12:45-13:30): y=~365-~405 → PDF.js: 230-190
+// Row 8 (P4 13:30-14:30): y=~405-~465 → PDF.js: 190-130
+// Row 9 (P5 14:30-15:30): y=~465-~492 → PDF.js: 130-103
 const PDF_PERIOD_ROW_Y = [
-    503.3,  // Top of AM     (pdfplumber y=91.7)
-    473.6,  // Top of P1     (pdfplumber y=121.4)
-    414.0,  // Top of P2     (pdfplumber y=181.0)
-    356.0,  // Top of Break  (pdfplumber y=239.0)
-    325.7,  // Top of P3     (pdfplumber y=269.3)
-    267.2,  // Top of PM     (pdfplumber y=327.8)
-    193.2,  // Top of Lunch  (pdfplumber y=401.8)
-    134.2,  // Top of P4     (pdfplumber y=460.8)
-     76.1,  // Top of P5     (pdfplumber y=518.9)
+    503.3,  // Top of AM Tutor (pdfplumber y=91.7)
+    473.6,  // Bottom of AM Tutor / Top of P1 (pdfplumber y=121.4)
+    412.0,  // Bottom of P1 / Top of P2 (595 - 183)
+    345.0,  // Bottom of P2 / Top of Break (595 - 250)
+    325.0,  // Bottom of Break / Top of P3 (595 - 270)
+    265.0,  // Bottom of P3 / Top of PM Tutor (595 - 330)
+    243.0,  // Bottom of PM Tutor / Top of Lunch (split at y=352, just above spillover at 241.7)
+    190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
+    130.0,  // Bottom of P4 / Top of P5 (595 - 465)
+    103.0,  // Bottom of P5 (595 - 492, extended to capture staff codes at y=486)
 ];
-// Header/title rows sit above the AM row — skip anything at or above this y.
-const PARENT_HEADER_Y = PDF_PERIOD_ROW_Y[0] + 2;  // ~505.3
+const PARENT_HEADER_Y = 520.0;  // Day headers
 
 function getDayBounds() {
     // Returns [topBound, ...midpoints, bottomBound] so that
@@ -454,25 +461,18 @@ function getDayForX_ParentView(x) {
 }
 
 function getPeriodBounds_ParentView() {
-    // Return the top-edge y for each period row.
-    // PDF_PERIOD_ROW_Y[i] is the top of period i (PDF.js bottom-up coords).
-    // Period i owns items where PDF_PERIOD_ROW_Y[i] >= y > PDF_PERIOD_ROW_Y[i+1].
-    // Period 8 (P5) extends down to 0.
+    // Simply return the boundaries as-is
     return PDF_PERIOD_ROW_Y;
 }
 
 function getPeriodForY_ParentView(y, boundaries) {
-    // boundaries = PDF_PERIOD_ROW_Y (9 top-edge values, descending).
-    // Period i owns items where boundaries[i] >= y > boundaries[i+1].
-    // Period 8 (P5) owns anything at or below boundaries[8].
-    for (let i = 0; i < boundaries.length - 1; i++) {
+    // boundaries[i] = top edge of period i, boundaries[i+1] = top edge of next period
+    // Period indices: 0=AM, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM, 6=Lunch, 7=P4, 8=P5
+    // Period i occupies: boundaries[i] >= y > boundaries[i+1]
+    for (let i = 0; i < 9; i++) {
         if (y <= boundaries[i] && y > boundaries[i + 1]) {
             return i;
         }
-    }
-    // Last period: anything at or below the bottom boundary
-    if (y <= boundaries[boundaries.length - 1]) {
-        return boundaries.length - 1;
     }
     return null;
 }
