@@ -1,3 +1,3 @@
 # timetable-generator
  
-v2
+v3
