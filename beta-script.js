@@ -412,7 +412,7 @@ const PDF_DAY_COL_BOUNDS = [
 // Row 6 (PM Tutor 12:30-12:45): y=~330-~375 → PDF.js: 265-220
 // Row 7 (Lunch 12:45-13:30): y=~375-~405 → PDF.js: 220-190
 // Row 8 (P4 13:30-14:30): y=~405-~465 → PDF.js: 190-130
-// Row 9 (P5 14:30-15:30): y=~465-~490 → PDF.js: 130-105
+// Row 9 (P5 14:30-15:30): y=~465-~492 → PDF.js: 130-103
 const PDF_PERIOD_ROW_Y = [
     530.0,  // Above table
     500.0,  // Top of AM Tutor (595 - 95)
@@ -424,7 +424,7 @@ const PDF_PERIOD_ROW_Y = [
     220.0,  // Bottom of PM Tutor / Top of Lunch (595 - 375)
     190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
     130.0,  // Bottom of P4 / Top of P5 (595 - 465)
-    105.0,  // Bottom of P5 (595 - 490)
+    103.0,  // Bottom of P5 (595 - 492, extended to capture staff codes at y=486)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
@@ -620,8 +620,8 @@ async function processPDF() {
             // B) PHYSICAL SPAN (staff view only): The lesson appears only in the PM cell but its
             //    text item extends visually into the Lunch column.
             //
-            // C) PARENT VIEW SPANNING: PM Tutor has most of the lesson details,
-            //    Lunch has just the staff code or room. Combine them.
+            // C) PARENT VIEW SPANNING: PM Tutor has lesson details,
+            //    Lunch has just the staff code, room, or very short continuation.
             const suppressedKeys = new Set();
             const LUNCH_COL_LEFT = PDF_COL_BOUNDS[6]; // 562
 
@@ -632,14 +632,20 @@ async function processPDF() {
                 const lunchText = rawCells[lunchKey] || "";
 
                 if (pmText && lunchText) {
-                    // Check if both cells have the same subject
                     const pmSub    = classifySubject(pmText);
                     const lunchSub = classifySubject(lunchText);
                     
+                    // Scenario A: Both cells have same subject (old style)
                     if (pmSub && lunchSub && pmSub.subject === lunchSub.subject) {
-                        // Scenario A/C: same subject in both slots (spanning lesson)
-                        // In parent view: PM has main content, Lunch might have just staff/room
-                        // Combine both texts to get complete information
+                        const combinedText = pmText + " " + lunchText;
+                        rawCells[`${d}_SPAN`] = combinedText;
+                        suppressedKeys.add(pmKey);
+                        suppressedKeys.add(lunchKey);
+                    }
+                    // Scenario C: PM has subject, Lunch is very short (likely just staff/room)
+                    else if (pmSub && !lunchSub && lunchText.length <= 10) {
+                        // Lunch has no classifiable subject and is short (≤10 chars)
+                        // This is likely a staff code or room spillover
                         const combinedText = pmText + " " + lunchText;
                         rawCells[`${d}_SPAN`] = combinedText;
                         suppressedKeys.add(pmKey);
@@ -653,7 +659,6 @@ async function processPDF() {
                     if (physicallySpans) {
                         rawCells[`${d}_SPAN`] = pmText;
                         suppressedKeys.add(pmKey);
-                        // lunchKey is already absent from rawCells, nothing to suppress
                     }
                 }
             }
