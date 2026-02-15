@@ -415,8 +415,8 @@ const PDF_DAY_COL_BOUNDS = [
 // Row 9 (P5 14:30-15:30): y=~465-~492 → PDF.js: 130-103
 const PDF_PERIOD_ROW_Y = [
     530.0,  // Above table
-    502.0,  // Top of AM Tutor - extended to 502 to ensure "Year 11: N5" at y=500 is captured
     473.6,  // Bottom of AM Tutor / Top of P1 (pdfplumber y=121.4)
+    500.0,  // Top of AM Tutor (595 - 95)
     412.0,  // Bottom of P1 / Top of P2 (595 - 183)
     356.0,  // Bottom of P2 / Top of Break (pdfplumber y=239.0)
     325.0,  // Bottom of Break / Top of P3 (595 - 270)
