@@ -418,13 +418,13 @@ const PDF_PERIOD_ROW_Y = [
     500.0,  // Top of AM Tutor (595 - 95)
     483.0,  // Bottom of AM Tutor - extended to 483 to ensure staff codes at y=485 are captured
     412.0,  // Bottom of P1 / Top of P2 (595 - 183)
-    356.0,  // Bottom of P2 / Top of Break (pdfplumber y=239.0)
+    345.0,  // Bottom of P2 / Top of Break (595 - 250)
     325.0,  // Bottom of Break / Top of P3 (595 - 270)
     265.0,  // Bottom of P3 / Top of PM Tutor (595 - 330)
     243.0,  // Bottom of PM Tutor / Top of Lunch (split at y=352, just above spillover at 241.7)
     190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
     130.0,  // Bottom of P4 / Top of P5 (595 - 465)
-     76.1,  // Bottom of P5 (pdfplumber y=518.9)
+    103.0,  // Bottom of P5 (595 - 492, extended to capture staff codes at y=486)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
