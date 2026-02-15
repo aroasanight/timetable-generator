@@ -414,16 +414,17 @@ const PDF_DAY_COL_BOUNDS = [
 // Row 8 (P4 13:30-14:30): y=~405-~465 → PDF.js: 190-130
 // Row 9 (P5 14:30-15:30): y=~465-~492 → PDF.js: 130-103
 const PDF_PERIOD_ROW_Y = [
-    503.3,  // Top of AM Tutor (pdfplumber y=91.7)
+    530.0,  // Above table
+    502.0,  // Top of AM Tutor - extended to 502 to ensure "Year 11: N5" at y=500 is captured
     473.6,  // Bottom of AM Tutor / Top of P1 (pdfplumber y=121.4)
     412.0,  // Bottom of P1 / Top of P2 (595 - 183)
-    345.0,  // Bottom of P2 / Top of Break (595 - 250)
+    356.0,  // Bottom of P2 / Top of Break (pdfplumber y=239.0)
     325.0,  // Bottom of Break / Top of P3 (595 - 270)
     265.0,  // Bottom of P3 / Top of PM Tutor (595 - 330)
     243.0,  // Bottom of PM Tutor / Top of Lunch (split at y=352, just above spillover at 241.7)
     190.0,  // Bottom of Lunch / Top of P4 (595 - 405)
     130.0,  // Bottom of P4 / Top of P5 (595 - 465)
-    103.0,  // Bottom of P5 (595 - 492, extended to capture staff codes at y=486)
+     76.1,  // Bottom of P5 (pdfplumber y=518.9)
 ];
 const PARENT_HEADER_Y = 520.0;  // Day headers
 
@@ -466,11 +467,17 @@ function getPeriodBounds_ParentView() {
 }
 
 function getPeriodForY_ParentView(y, boundaries) {
-    // boundaries[i] = top edge of period i, boundaries[i+1] = top edge of next period
-    // Period indices: 0=AM, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM, 6=Lunch, 7=P4, 8=P5
-    // Period i occupies: boundaries[i] >= y > boundaries[i+1]
-    for (let i = 0; i < 9; i++) {
-        if (y <= boundaries[i] && y > boundaries[i + 1]) {
+    // boundaries represent the edges between table rows
+    // boundaries[0] = 530 (above table)
+    // boundaries[1] = 500 (top of AM Tutor) 
+    // boundaries[2] = 485 (bottom of AM Tutor / top of P1)
+    // ... and so on
+    // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
+    
+    // Period i occupies the space: boundaries[i+1] >= y > boundaries[i+2]
+    // Changed to >= to include items exactly at boundaries
+    for (let i = 0; i < 9; i++) {  // 9 periods
+        if (y <= boundaries[i + 1] && y >= boundaries[i + 2]) {
             return i;
         }
     }
