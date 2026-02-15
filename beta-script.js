@@ -474,9 +474,10 @@ function getPeriodForY_ParentView(y, boundaries) {
     // ... and so on
     // Period indices: 0=AM Tutor, 1=P1, 2=P2, 3=Break, 4=P3, 5=PM Tutor, 6=Lunch, 7=P4, 8=P5
     
-    // Period i occupies the space: boundaries[i+1] > y >= boundaries[i+2]
+    // Period i occupies the space: boundaries[i+1] >= y > boundaries[i+2]
+    // Changed to >= to include items exactly at boundaries
     for (let i = 0; i < 9; i++) {  // 9 periods
-        if (y <= boundaries[i + 1] && y > boundaries[i + 2]) {
+        if (y <= boundaries[i + 1] && y >= boundaries[i + 2]) {
             return i;
         }
     }
