@@ -16,6 +16,7 @@ i lied when i said i wouldn't do this it's now 2.12am but hey
   * [current lessons pane (right)](#current-lessons-pane-right)
   * [lesson presets pane (bottom middle)](#lesson-presets-pane-bottom-middle)
   * [timetable preview (top middle)](#timetable-preview-pane-top-middle)
+* [known bugs & workaround](#known-bugs-workarounds)
 * [json export & import](#json-export-import)
 * [pdf import](#pdf-import)
 * [obtaining a pdf](#obtaining-a-pdf)
@@ -68,6 +69,16 @@ again from top to bottom;-
 * preview of timetable (press generate button to update, doesn't update live)
 * download timetable
   * getting weird results? try a different browser. there are subtle differences in how they render the final timetable.
+
+# known bugs & workarounds
+
+### generated timetables download differently from different browsers
+
+this is not going to be fixed. just deal with it, or use a different browser. Safari is built in and is best for mac, so use that. I haven't tried but I reckon microsoft edge will be fine on windows. it's pretty much the exact same thing as chrome just with microsoft making it their own.
+
+### column widths change if there is too much text in a field
+
+no plans to change this. if it's important they're all consistent widths then shorten the lesson names/staff codes/room names to be something shorter but you still know what they mean. on the example timetable one of the tutor events shows "ART2 CAA" which is noticeably too wide - you could shorten this to "ART2 CA" or even "A2 CA" - although shortening ART2 to A2 might get you confused between ART1 and A1 (different rooms).
 
 # json export & import
 
