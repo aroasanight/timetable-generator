@@ -241,24 +241,90 @@ function exportJSON() {
 
 // ─── Presets ──────────────────────────────────────────────────────────────────
 
+let currentPresetEditIndex = -1;
+
+function addPreset() {
+    currentPresetEditIndex = -1;
+    document.getElementById("presetModalTitle").textContent = "Add Preset";
+    document.getElementById("presetSubject").value = "";
+    document.getElementById("presetStaff").value = "";
+    document.getElementById("presetColor").value = "#e3f2fd";
+    document.getElementById("presetModal").style.display = "block";
+}
+
 function editPreset(index) {
+    currentPresetEditIndex = index;
     const p = presets[index];
-    const ns = prompt("Enter new subject:", p.subject); if (ns===null) return;
-    const nst= prompt("Enter new staff:", p.staff); if (nst===null) return;
-    const nc = prompt("Enter new color (hex):", p.color); if (nc===null) return;
-    currentData.events.forEach(ev => { if (ev[2]===p.subject && ev[4]===p.staff) { ev[2]=ns.trim(); ev[4]=nst.trim(); ev[5]=nc; } });
-    presets[index] = { subject: ns.trim(), staff: nst.trim(), color: nc };
-    updatePresetsList(); updatePresetSelect(); updateEventsList();
+    document.getElementById("presetModalTitle").textContent = "Edit Preset";
+    document.getElementById("presetSubject").value = p.subject;
+    document.getElementById("presetStaff").value = p.staff;
+    document.getElementById("presetColor").value = p.color;
+    document.getElementById("presetModal").style.display = "block";
+}
+
+function savePreset() {
+    const subject = document.getElementById("presetSubject").value.trim();
+    const staff = document.getElementById("presetStaff").value.trim();
+    const color = document.getElementById("presetColor").value;
+    
+    if (!subject) {
+        alert("Please enter a subject name");
+        return;
+    }
+    
+    if (currentPresetEditIndex >= 0) {
+        // Editing existing preset - update all events that use this preset
+        const oldPreset = presets[currentPresetEditIndex];
+        currentData.events.forEach(ev => {
+            if (ev[2] === oldPreset.subject && ev[4] === oldPreset.staff) {
+                ev[2] = subject;
+                ev[4] = staff;
+                ev[5] = color;
+            }
+        });
+        presets[currentPresetEditIndex] = { subject, staff, color };
+    } else {
+        // Adding new preset
+        presets.push({ subject, staff, color });
+    }
+    
+    updatePresetsList();
+    updatePresetSelect();
+    updateEventsList();
+    closePresetModal();
+}
+
+function deletePreset(index) {
+    if (confirm("Delete this preset?")) {
+        presets.splice(index, 1);
+        updatePresetsList();
+        updatePresetSelect();
+    }
+}
+
+function closePresetModal() {
+    document.getElementById("presetModal").style.display = "none";
 }
 
 function updatePresetsList() {
     const container = document.getElementById("presetsList"); container.innerHTML = "";
     presets.forEach((preset, index) => {
-        const div = document.createElement("div"); div.className = "preset-section"; div.style.backgroundColor = preset.color; div.style.color = "#000";
-        div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;"><span>${preset.subject} - ${preset.staff}</span><div><button onclick="editPreset(${index})" style="margin:0;padding:4px 8px;font-size:11px;margin-right:5px;">Edit</button><button class="danger" onclick="deletePreset(${index})" style="margin:0;padding:4px 8px;font-size:11px;">Delete</button></div></div>`;
+        const div = document.createElement("div");
+        div.className = "event-item";
+        div.style.borderColor = preset.color;
+        div.style.backgroundColor = preset.color + "20";
+        div.innerHTML = `
+            <div class="event-item-content" style="flex:1;">
+                <strong>${preset.subject}</strong>
+                ${preset.staff ? `<div class="event-item-details">${preset.staff}</div>` : ''}
+            </div>
+            <div class="event-actions">
+                <button onclick="editPreset(${index})">Edit</button>
+                <button class="danger" onclick="deletePreset(${index})">×</button>
+            </div>`;
         container.appendChild(div);
     });
-    if (!presets.length) container.innerHTML = '<div style="text-align:center;color:#aaa;padding:10px;font-size:12px;">No presets saved yet</div>';
+    if (!presets.length) container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:10px;font-size:12px;">No presets saved yet</div>';
 }
 
 function updatePresetSelect() {
@@ -344,20 +410,16 @@ function updateEventsList() {
     currentData.events.forEach((ev, index) => {
         const div = document.createElement("div"); div.className = "event-item"; div.style.borderColor = ev[5];
         const dayName = dayNames[ev[0]] || `Day ${ev[0]}`;
-        const pname = {6:"PM/Lunch Span",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `Period ${ev[1]}`);
-        const details = [ev[2],ev[3],ev[4]].filter(x=>x).join(" ");
+        const pname = {6:"PM/Lunch",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `P${ev[1]}`);
         
-        // Use new layout for better space utilization
+        // Build details string
+        const details = [ev[3], ev[4]].filter(x=>x).join(" • ");
+        
         div.innerHTML = `
-            <div class="event-item-label">${dayName} ${pname}</div>
+            <div class="event-item-label">${dayName}<br>${pname}</div>
             <div class="event-item-content">
-                ${ev[2] ? `<div><strong>${ev[2]}</strong></div>` : ''}
-                ${ev[3] || ev[4] ? `<div class="event-item-row">
-                    ${ev[3] ? `<span>Room:</span><span>${ev[3]}</span>` : ''}
-                </div>` : ''}
-                ${ev[4] ? `<div class="event-item-row">
-                    <span>Staff:</span><span>${ev[4]}</span>
-                </div>` : ''}
+                ${ev[2] ? `<strong>${ev[2]}</strong>` : '<strong>—</strong>'}
+                ${details ? `<div class="event-item-details">${details}</div>` : ''}
             </div>
             <div class="event-actions">
                 <button onclick="editEvent(${index})">Edit</button>
@@ -979,22 +1041,23 @@ window.onclick = function(event) {
     if (event.target === document.getElementById("eventModal"))       closeModal();
     else if (event.target === document.getElementById("uploadModal")) closeUploadModal();
     else if (event.target === document.getElementById("jsonModal"))   closeJSONModal();
+    else if (event.target === document.getElementById("presetModal")) closePresetModal();
 };
 
 // ─── Theme toggle ─────────────────────────────────────────────────────────────
 
 function toggleTheme() {
     const body = document.body;
-    const icon = document.querySelector('.theme-icon');
+    const text = document.querySelector('.theme-text');
     
     body.classList.toggle('light-theme');
     
-    // Update icon
+    // Update text
     if (body.classList.contains('light-theme')) {
-        icon.textContent = '🌙';
+        text.textContent = 'Light';
         localStorage.setItem('theme', 'light');
     } else {
-        icon.textContent = '☀️';
+        text.textContent = 'Dark';
         localStorage.setItem('theme', 'dark');
     }
 }
@@ -1002,13 +1065,13 @@ function toggleTheme() {
 // Load saved theme preference
 function loadTheme() {
     const savedTheme = localStorage.getItem('theme');
-    const icon = document.querySelector('.theme-icon');
+    const text = document.querySelector('.theme-text');
     
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
-        if (icon) icon.textContent = '🌙';
+        if (text) text.textContent = 'Light';
     } else {
-        if (icon) icon.textContent = '☀️';
+        if (text) text.textContent = 'Dark';
     }
 }
 

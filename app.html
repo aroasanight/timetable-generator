@@ -12,81 +12,57 @@
 
 <body>
     <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
-        <span class="theme-icon">☀️</span>
+        <span class="theme-text">Dark</span>
     </div>
     <div class="container">
-        <div class="controls-container">
-            <!-- General Settings Panel -->
-            <div class="control-panel">
-                <h2>General Settings</h2>
+        <!-- Left column: General Settings -->
+        <div class="control-panel">
+            <h2>General Settings</h2>
 
-                <div class="form-group">
-                    <label for="shortName">Short Name:</label>
-                    <input type="text" id="shortName" placeholder="Enter short name">
-                </div>
-
-                <div class="form-group">
-                    <label for="initials">Initials:</label>
-                    <input type="text" id="initials" placeholder="Enter initials">
-                </div>
-
-                <div class="form-group">
-                    <label for="tutorGroup">Tutor Group:</label>
-                    <input type="text" id="tutorGroup" placeholder="Enter tutor group">
-                </div>
-
-                <div class="form-group">
-                    <label for="nameDisplay">Name Display:</label>
-                    <select id="nameDisplay">
-                        <option value="none">None</option>
-                        <option value="short">Short Name</option>
-                        <option value="initials">Initials</option>
-                        <option value="tutor">Tutor Group</option>
-                        <option value="both">Both (Tutor + Initials)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Days to Display:</label>
-                    <div id="daysCheckboxes"></div>
-                </div>
-
-                <div class="form-group">
-                    <label>Periods to Display:</label>
-                    <div class="checkbox-group" id="periodsCheckboxes"></div>
-                </div>
+            <div class="form-group">
+                <label for="shortName">Short Name:</label>
+                <input type="text" id="shortName" placeholder="Enter short name">
             </div>
 
-            <!-- Current Lessons Panel -->
-            <div class="control-panel">
-                <h2>Current Lessons</h2>
-
-                <div class="button-row">
-                    <button onclick="addEvent()">Add Event</button>
-                    <button class="secondary" onclick="openUploadModal()">Import PDF</button>
-                    <button class="secondary" onclick="openJSONModal()">JSON</button>
-                </div>
-
-                <div class="form-group events-list-container">
-                    <label>Events List:</label>
-                    <div class="events-list" id="eventsList"></div>
-                </div>
+            <div class="form-group">
+                <label for="initials">Initials:</label>
+                <input type="text" id="initials" placeholder="Enter initials">
             </div>
 
-            <!-- Lesson Presets Panel -->
-            <div class="control-panel">
-                <h2>Lesson Presets</h2>
+            <div class="form-group">
+                <label for="tutorGroup">Tutor Group:</label>
+                <input type="text" id="tutorGroup" placeholder="Enter tutor group">
+            </div>
 
-                <div class="form-group">
-                    <div id="presetsList"></div>
-                </div>
+            <div class="form-group">
+                <label for="nameDisplay">Name Display:</label>
+                <select id="nameDisplay">
+                    <option value="none">None</option>
+                    <option value="short">Short Name</option>
+                    <option value="initials">Initials</option>
+                    <option value="tutor">Tutor Group</option>
+                    <option value="both">Both (Tutor + Initials)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Days to Display:</label>
+                <div id="daysCheckboxes"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Periods to Display:</label>
+                <div class="checkbox-group" id="periodsCheckboxes"></div>
             </div>
         </div>
 
-        <div class="main-content">
-            <div class="timetable-section">
+        <!-- Middle column: Timetable + Presets -->
+        <div class="middle-column">
+            <!-- Timetable at top -->
+            <div class="control-panel timetable-panel">
+                <h2>Timetable Preview</h2>
                 <div class="timetable-controls">
-                    <button onclick="generateTimetable()">Generate Timetable</button>
+                    <button onclick="generateTimetable()">Generate</button>
                     <button class="secondary" onclick="downloadImage()">Download PNG</button>
                 </div>
                 <div class="timetable-container">
@@ -101,6 +77,31 @@
                         </table>
                     </div>
                 </div>
+            </div>
+
+            <!-- Presets below timetable -->
+            <div class="control-panel">
+                <h2>Lesson Presets</h2>
+                <button onclick="addPreset()" style="margin: 0 0 12px 0;">Add Preset</button>
+                <div class="form-group">
+                    <div id="presetsList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right column: Current Lessons -->
+        <div class="control-panel">
+            <h2>Current Lessons</h2>
+
+            <div class="button-row">
+                <button onclick="addEvent()">Add Event</button>
+                <button class="secondary" onclick="openUploadModal()">Import PDF</button>
+                <button class="secondary" onclick="openJSONModal()">JSON</button>
+            </div>
+
+            <div class="form-group events-list-container">
+                <label>Events List:</label>
+                <div class="events-list" id="eventsList"></div>
             </div>
         </div>
     </div>
@@ -150,6 +151,32 @@
 
             <button onclick="saveEvent()">Save Event</button>
             <button class="secondary" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Modal for adding/editing presets -->
+    <div id="presetModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePresetModal()">&times;</span>
+            <h3 id="presetModalTitle">Add Preset</h3>
+
+            <div class="form-group">
+                <label for="presetSubject">Subject:</label>
+                <input type="text" id="presetSubject" placeholder="Enter subject name">
+            </div>
+
+            <div class="form-group">
+                <label for="presetStaff">Staff:</label>
+                <input type="text" id="presetStaff" placeholder="Enter staff name">
+            </div>
+
+            <div class="form-group">
+                <label for="presetColor">Color:</label>
+                <input type="color" id="presetColor" value="#e3f2fd">
+            </div>
+
+            <button onclick="savePreset()">Save Preset</button>
+            <button class="secondary" onclick="closePresetModal()">Cancel</button>
         </div>
     </div>
 
