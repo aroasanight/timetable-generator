@@ -11,6 +11,9 @@
 </head>
 
 <body>
+    <div class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+        <span class="theme-icon">☀️</span>
+    </div>
     <div class="container">
         <div class="controls-container">
             <!-- General Settings Panel -->
@@ -58,11 +61,11 @@
             <div class="control-panel">
                 <h2>Current Lessons</h2>
 
-                <button onclick="addEvent()">Add New Event</button>
-                <button class="secondary" onclick="generateTimetable()">Generate Timetable</button>
-                <button class="secondary" onclick="downloadImage()">Download as PNG</button>
-                <button class="secondary" onclick="openUploadModal()">Upload PDF</button>
-                <button class="secondary" onclick="openJSONModal()">Manage JSON</button>
+                <div class="button-row">
+                    <button onclick="addEvent()">Add Event</button>
+                    <button class="secondary" onclick="openUploadModal()">Import PDF</button>
+                    <button class="secondary" onclick="openJSONModal()">JSON</button>
+                </div>
 
                 <div class="form-group events-list-container">
                     <label>Events List:</label>
@@ -81,16 +84,22 @@
         </div>
 
         <div class="main-content">
-            <div class="timetable-container">
-                <canvas id="timetableCanvas" class="hidden"></canvas>
-                <div id="timetableWrapper" class="timetable-wrapper">
-                    <table class="timetable" id="timetableTable">
-                        <tbody id="timetableBody">
-                            <tr>
-                                <td colspan="100%" class="placeholder-text">Configure your timetable and click "Generate Timetable" to see preview</td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <div class="timetable-section">
+                <div class="timetable-controls">
+                    <button onclick="generateTimetable()">Generate Timetable</button>
+                    <button class="secondary" onclick="downloadImage()">Download PNG</button>
+                </div>
+                <div class="timetable-container">
+                    <canvas id="timetableCanvas" class="hidden"></canvas>
+                    <div id="timetableWrapper" class="timetable-wrapper">
+                        <table class="timetable" id="timetableTable">
+                            <tbody id="timetableBody">
+                                <tr>
+                                    <td colspan="100%" class="placeholder-text">Configure and generate</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -155,21 +164,19 @@
                 <input type="file" id="pdfUpload" accept=".pdf" class="file-input">
             </div>
 
-            <div class="form-group checkbox-inline">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="includeStudyPeriods" checked class="checkbox-input">
+            <div class="form-group">
+                <label class="checkbox-label-inline">
+                    <input type="checkbox" id="includeStudyPeriods" checked>
                     <span>Include study periods</span>
                 </label>
             </div>
 
-            <div class="form-group checkbox-inline">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="pdfDaysAsRows" checked class="checkbox-input">
+            <div class="form-group">
+                <label class="checkbox-label-inline">
+                    <input type="checkbox" id="pdfDaysAsRows" checked>
                     <span>Days as rows (staff view)</span>
                 </label>
-                <div class="checkbox-hint">
-                    Uncheck for parent view (days as columns)
-                </div>
+                <div class="checkbox-hint">Uncheck for parent view (days as columns)</div>
             </div>
 
             <div id="pdfStatus" class="pdf-status"></div>

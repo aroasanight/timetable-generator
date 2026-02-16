@@ -344,12 +344,26 @@ function updateEventsList() {
     currentData.events.forEach((ev, index) => {
         const div = document.createElement("div"); div.className = "event-item"; div.style.borderColor = ev[5];
         const dayName = dayNames[ev[0]] || `Day ${ev[0]}`;
-        const pname = {6:"PM/Lunch Span",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `Period ${ev[1]}`);
-        const details = [ev[2],ev[3],ev[4]].filter(x=>x).join(" ");
-        div.innerHTML = `<div>${dayName} - ${pname}</div><div>${details}</div><div class="event-actions"><button onclick="editEvent(${index})">Edit</button><button class="danger" onclick="deleteEvent(${index})">Delete</button></div>`;
+        const pname = {6:"PM/Lunch",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `P${ev[1]}`);
+        
+        div.innerHTML = `
+            <div class="event-item-label">${dayName} ${pname}</div>
+            <div class="event-item-content">
+                ${ev[2] ? `<div><strong>${ev[2]}</strong></div>` : ''}
+                <div class="event-item-row">
+                    ${ev[3] ? `<span>Room:</span><span>${ev[3]}</span>` : ''}
+                </div>
+                <div class="event-item-row">
+                    ${ev[4] ? `<span>Staff:</span><span>${ev[4]}</span>` : ''}
+                </div>
+            </div>
+            <div class="event-actions">
+                <button onclick="editEvent(${index})">Edit</button>
+                <button class="danger" onclick="deleteEvent(${index})">×</button>
+            </div>`;
         container.appendChild(div);
     });
-    if (!currentData.events.length) container.innerHTML = '<div style="text-align:center;color:#aaa;padding:20px;">No events added yet</div>';
+    if (!currentData.events.length) container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:12px;">No events yet</div>';
 }
 
 // ─── PDF Import ───────────────────────────────────────────────────────────────
@@ -965,4 +979,38 @@ window.onclick = function(event) {
     else if (event.target === document.getElementById("jsonModal"))   closeJSONModal();
 };
 
-document.addEventListener("DOMContentLoaded", init);
+// ─── Theme toggle ─────────────────────────────────────────────────────────────
+
+function toggleTheme() {
+    const body = document.body;
+    const icon = document.querySelector('.theme-icon');
+    
+    body.classList.toggle('light-theme');
+    
+    // Update icon
+    if (body.classList.contains('light-theme')) {
+        icon.textContent = '🌙';
+        localStorage.setItem('theme', 'light');
+    } else {
+        icon.textContent = '☀️';
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+// Load saved theme preference
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const icon = document.querySelector('.theme-icon');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (icon) icon.textContent = '🌙';
+    } else {
+        if (icon) icon.textContent = '☀️';
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadTheme();
+    init();
+});
