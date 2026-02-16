@@ -2,11 +2,13 @@
 
 head to [https://timetable.aroasanight.com](https://timetable.aroasanight.com/app) 
 
-i lied when i said i wouldn't do this it's now 1.29am but hey
+i lied when i said i wouldn't do this it's now 2.12am but hey
 
 ** force push val 6
 
 # contents
+
+## [go back to timetable generator app](https://timetable.aroasanight.com/app)
 
 * [features](#features)
 * [overview](#overview)
@@ -63,7 +65,7 @@ again from top to bottom;-
 * preview of timetable (press generate button to update, doesn't update live)
 * download timetable
 
-# PDF import
+# pdf import
 
 ![pdf import screen](https://raw.githubusercontent.com/aroasanight/timetable-generator/refs/heads/main/readme-assets/pdf.png)
 
@@ -78,7 +80,7 @@ if you can't be bothered to read all of step 3 - leave the box checked if you go
 4. click "Import PDF"
 5. close out of this menu and click the "generate" button. compare against the PDF. if lessons are missing, or incorrect, play around with the entries in the "Subject Keyword Mappings" section, then try importing the PDF again (will overwrite everything, you don't need to delete stuff). These are the keywords the program uses to detect each type of lesson - look on your PDF and experiment with different keywords to get better detection.
 
-# JSON export & import
+# json export & import
 
 ![json management screen](https://raw.githubusercontent.com/aroasanight/timetable-generator/refs/heads/main/readme-assets/json.png)
 
