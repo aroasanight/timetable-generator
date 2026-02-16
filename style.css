@@ -61,11 +61,39 @@ body {
     transition: background 0.3s ease, color 0.3s ease;
 }
 
-.theme-toggle {
+.top-right-controls {
     position: fixed;
     top: 16px;
     right: 16px;
     z-index: 999;
+    display: flex;
+    gap: 8px;
+}
+
+.help-button {
+    padding: 6px 10px;
+    border-radius: 2px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: background 0.2s ease;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+}
+
+.help-button:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--border-secondary);
+    color: var(--text-primary);
+}
+
+.theme-toggle {
     padding: 6px 10px;
     border-radius: 2px;
     background: var(--bg-secondary);
@@ -942,9 +970,14 @@ body.light-theme .file-input-label:hover {
         padding: 8px;
     }
     
-    .theme-toggle {
+    .top-right-controls {
         top: 8px;
         right: 8px;
+        gap: 6px;
+    }
+    
+    .help-button,
+    .theme-toggle {
         padding: 5px 8px;
         font-size: 10px;
     }
@@ -988,6 +1021,7 @@ body.light-theme .file-input-label:hover {
         font-size: 14px;
     }
     
+    .help-button,
     .theme-toggle {
         padding: 4px 7px;
         font-size: 9px;
