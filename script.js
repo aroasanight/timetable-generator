@@ -406,28 +406,62 @@ function openUploadModal() { document.getElementById("uploadModal").style.displa
 function closeUploadModal() { document.getElementById("uploadModal").style.display = "none"; document.getElementById("pdfUpload").value = ""; }
 
 function updateEventsList() {
-    const container = document.getElementById("eventsList"); container.innerHTML = "";
-    currentData.events.forEach((ev, index) => {
-        const div = document.createElement("div"); div.className = "event-item"; div.style.borderColor = ev[5];
-        const dayName = dayNames[ev[0]] || `Day ${ev[0]}`;
-        const pname = {6:"PM/Lunch",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `P${ev[1]}`);
-        
-        // Build details string
-        const details = [ev[3], ev[4]].filter(x=>x).join(" • ");
-        
-        div.innerHTML = `
-            <div class="event-item-label">${dayName}<br>${pname}</div>
-            <div class="event-item-content">
-                ${ev[2] ? `<strong>${ev[2]}</strong>` : '<strong>—</strong>'}
-                ${details ? `<div class="event-item-details">${details}</div>` : ''}
-            </div>
-            <div class="event-actions">
-                <button onclick="editEvent(${index})">Edit</button>
-                <button class="danger" onclick="deleteEvent(${index})">×</button>
-            </div>`;
-        container.appendChild(div);
+    const container = document.getElementById("eventsList"); 
+    container.innerHTML = "";
+    
+    if (!currentData.events.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:12px;">No events added yet</div>';
+        return;
+    }
+    
+    // Sort events by day, then by period
+    const sortedEvents = currentData.events
+        .map((ev, originalIndex) => ({ev, originalIndex}))
+        .sort((a, b) => {
+            if (a.ev[0] !== b.ev[0]) return a.ev[0] - b.ev[0]; // Sort by day
+            return a.ev[1] - b.ev[1]; // Then by period
+        });
+    
+    // Group by day
+    const eventsByDay = {};
+    sortedEvents.forEach(({ev, originalIndex}) => {
+        const dayIndex = ev[0];
+        if (!eventsByDay[dayIndex]) eventsByDay[dayIndex] = [];
+        eventsByDay[dayIndex].push({ev, originalIndex});
     });
-    if (!currentData.events.length) container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:12px;">No events added yet</div>';
+    
+    // Render each day group
+    Object.keys(eventsByDay).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dayIndex => {
+        const dayName = dayNames[parseInt(dayIndex)] || `Day ${dayIndex}`;
+        
+        // Day header
+        const dayHeader = document.createElement("div");
+        dayHeader.className = "day-header";
+        dayHeader.textContent = dayName;
+        container.appendChild(dayHeader);
+        
+        // Events for this day
+        eventsByDay[dayIndex].forEach(({ev, originalIndex}) => {
+            const div = document.createElement("div");
+            div.className = "event-item";
+            div.style.borderColor = ev[5];
+            
+            const pname = {6:"PM/Lunch",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `P${ev[1]}`);
+            const details = [ev[3], ev[4]].filter(x=>x).join(" • ");
+            
+            div.innerHTML = `
+                <div class="event-item-label">${pname}</div>
+                <div class="event-item-content">
+                    ${ev[2] ? `<strong>${ev[2]}</strong>` : '<strong>—</strong>'}
+                    ${details ? `<div class="event-item-details">${details}</div>` : ''}
+                </div>
+                <div class="event-actions">
+                    <button onclick="editEvent(${originalIndex})">Edit</button>
+                    <button class="danger" onclick="deleteEvent(${originalIndex})">×</button>
+                </div>`;
+            container.appendChild(div);
+        });
+    });
 }
 
 // ─── PDF Import ───────────────────────────────────────────────────────────────
