@@ -1,3 +1,10 @@
-# timetable-generator
+# Timetable Generator
+
+Head to [https://timetable.aroasanight.com/app](https://timetable.aroasanight.com) 
+
+## Features
+
+ha good luck use common sense it's not that bad
+
+will update this eventually. not at 12.38am on a monday though
  
-v5
