@@ -344,18 +344,20 @@ function updateEventsList() {
     currentData.events.forEach((ev, index) => {
         const div = document.createElement("div"); div.className = "event-item"; div.style.borderColor = ev[5];
         const dayName = dayNames[ev[0]] || `Day ${ev[0]}`;
-        const pname = {6:"PM/Lunch",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `P${ev[1]}`);
+        const pname = {6:"PM/Lunch Span",7:"Lunch",8:"P4",9:"P5",10:"After"}[ev[1]] ?? (periodNames[ev[1]] || `Period ${ev[1]}`);
+        const details = [ev[2],ev[3],ev[4]].filter(x=>x).join(" ");
         
+        // Use new layout for better space utilization
         div.innerHTML = `
             <div class="event-item-label">${dayName} ${pname}</div>
             <div class="event-item-content">
                 ${ev[2] ? `<div><strong>${ev[2]}</strong></div>` : ''}
-                <div class="event-item-row">
+                ${ev[3] || ev[4] ? `<div class="event-item-row">
                     ${ev[3] ? `<span>Room:</span><span>${ev[3]}</span>` : ''}
-                </div>
-                <div class="event-item-row">
-                    ${ev[4] ? `<span>Staff:</span><span>${ev[4]}</span>` : ''}
-                </div>
+                </div>` : ''}
+                ${ev[4] ? `<div class="event-item-row">
+                    <span>Staff:</span><span>${ev[4]}</span>
+                </div>` : ''}
             </div>
             <div class="event-actions">
                 <button onclick="editEvent(${index})">Edit</button>
@@ -363,7 +365,7 @@ function updateEventsList() {
             </div>`;
         container.appendChild(div);
     });
-    if (!currentData.events.length) container.innerHTML = '<div style="text-align:center;color:#555;padding:20px;font-size:12px;">No events yet</div>';
+    if (!currentData.events.length) container.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:20px;font-size:12px;">No events added yet</div>';
 }
 
 // ─── PDF Import ───────────────────────────────────────────────────────────────
