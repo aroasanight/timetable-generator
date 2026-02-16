@@ -1,6 +1,6 @@
 # Timetable Generator
 
-Head to [https://timetable.aroasanight.com/app](https://timetable.aroasanight.com) 
+Head to [https://timetable.aroasanight.com](https://timetable.aroasanight.com/app) 
 
 ## Features
 
