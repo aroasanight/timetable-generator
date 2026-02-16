@@ -36,6 +36,8 @@ i lied when i said i wouldn't do this it's now 2.12am but hey
 
 ![app main screen](https://raw.githubusercontent.com/aroasanight/timetable-generator/refs/heads/main/readme-assets/main.png)
 
+![sample timetable](https://raw.githubusercontent.com/aroasanight/timetable-generator/refs/heads/main/readme-assets/sample.png)
+
 ### general settings pane (left)
 
 from top to bottom;-
@@ -64,6 +66,7 @@ again from top to bottom;-
 
 * preview of timetable (press generate button to update, doesn't update live)
 * download timetable
+  * getting weird results? try a different browser. there are subtle differences in how they render the final timetable.
 
 # pdf import
 
